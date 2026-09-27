@@ -36,7 +36,7 @@ struct ValidateWorkoutsCacheUseCaseTests {
     @Test func validateCache_hasNoSideEffectsOnNonExpiredCache() async throws {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 29, 9, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 29, 9, 0)).local)
 
         try await sut.validateCache()
 
@@ -46,7 +46,7 @@ struct ValidateWorkoutsCacheUseCaseTests {
     @Test func validateCache_deletesCacheAndCompletionMarksOnExpiredCache() async throws {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)).local)
 
         try await sut.validateCache()
 
@@ -57,7 +57,7 @@ struct ValidateWorkoutsCacheUseCaseTests {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
         let marksDeletionError = NSError(domain: "marks deletion error", code: 0)
-        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)).local)
         store.stubMarksDeletion(with: marksDeletionError)
 
         await #expect {
@@ -70,7 +70,7 @@ struct ValidateWorkoutsCacheUseCaseTests {
     @Test func validateCache_doesNotDeleteCachedWorkoutsOnCompletionMarksDeletionError() async {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)).local)
         store.stubMarksDeletion(with: anyNSError())
 
         try? await sut.validateCache()
@@ -82,7 +82,7 @@ struct ValidateWorkoutsCacheUseCaseTests {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
         let deletionError = NSError(domain: "deletion error", code: 0)
-        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)).local)
         store.stubDeletion(with: deletionError)
 
         await #expect {

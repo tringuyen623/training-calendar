@@ -7,7 +7,7 @@ struct CacheWorkoutsUseCaseTests {
         let (sut, store) = makeSUT()
         store.stubDeletion(with: anyNSError())
 
-        try? await sut.save(uniqueDays())
+        try? await sut.save(uniqueDays().models)
 
         #expect(store.receivedMessages == [.deleteCachedWorkouts])
     }
@@ -18,9 +18,9 @@ struct CacheWorkoutsUseCaseTests {
         let days = uniqueDays()
 
         now = Date(timeIntervalSince1970: 2_000)
-        try? await sut.save(days)
+        try? await sut.save(days.models)
 
-        #expect(store.receivedMessages == [.deleteCachedWorkouts, .insert(days, now)])
+        #expect(store.receivedMessages == [.deleteCachedWorkouts, .insert(days.local, now)])
     }
 
     @Test func save_hasNoSideEffectsBeyondDeletionAndInsertionOnInsertionError() async {
@@ -29,9 +29,9 @@ struct CacheWorkoutsUseCaseTests {
         let days = uniqueDays()
         store.stubInsertion(with: anyNSError())
 
-        try? await sut.save(days)
+        try? await sut.save(days.models)
 
-        #expect(store.receivedMessages == [.deleteCachedWorkouts, .insert(days, now)])
+        #expect(store.receivedMessages == [.deleteCachedWorkouts, .insert(days.local, now)])
     }
 
     @Test func save_failsOnDeletionError() async {
@@ -40,7 +40,7 @@ struct CacheWorkoutsUseCaseTests {
         store.stubDeletion(with: deletionError)
 
         await #expect {
-            try await sut.save(uniqueDays())
+            try await sut.save(uniqueDays().models)
         } throws: { error in
             error as NSError == deletionError
         }
@@ -52,7 +52,7 @@ struct CacheWorkoutsUseCaseTests {
         store.stubInsertion(with: insertionError)
 
         await #expect {
-            try await sut.save(uniqueDays())
+            try await sut.save(uniqueDays().models)
         } throws: { error in
             error as NSError == insertionError
         }
@@ -62,7 +62,7 @@ struct CacheWorkoutsUseCaseTests {
         let (sut, _) = makeSUT()
 
         await #expect(throws: Never.self) {
-            try await sut.save(uniqueDays())
+            try await sut.save(uniqueDays().models)
         }
     }
 

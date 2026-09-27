@@ -6,7 +6,7 @@ final class WeeklyWorkoutsStoreSpy: WorkoutsStore, CompletionMarksStore {
     enum Message: Equatable {
         case retrieve
         case deleteCachedWorkouts
-        case insert([WorkoutDay], Date)
+        case insert([LocalWorkoutDay], Date)
         case deleteAllMarks
         case insertMark(Bool, String)
         case retrieveAllMarks
@@ -50,7 +50,7 @@ final class WeeklyWorkoutsStoreSpy: WorkoutsStore, CompletionMarksStore {
         try deletionResult.get()
     }
 
-    func insert(_ days: [WorkoutDay], timestamp: Date) async throws {
+    func insert(_ days: [LocalWorkoutDay], timestamp: Date) async throws {
         receivedMessages.append(.insert(days, timestamp))
         try insertionResult.get()
     }
