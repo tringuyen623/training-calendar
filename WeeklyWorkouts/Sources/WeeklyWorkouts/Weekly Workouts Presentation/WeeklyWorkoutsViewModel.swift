@@ -34,18 +34,23 @@ public final class WeeklyWorkoutsViewModel {
     public func send(_ action: Action) async {
         switch action {
         case .loadWeek:
-            guard !isLoading else { return }
-            isLoading = true
-            do {
-                show(try await loadWeek())
-            } catch is CancellationError {
-            } catch {
-                show([])
-                errorMessage = "Couldn't load workouts"
-            }
-            isLoading = false
+            await load()
         case .dismissError:
             errorMessage = nil
+        }
+    }
+
+    private func load() async {
+        guard !isLoading else { return }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            show(try await loadWeek())
+        } catch is CancellationError {
+            return
+        } catch {
+            show([])
+            errorMessage = "Couldn't load workouts"
         }
     }
 
