@@ -11,6 +11,7 @@ public final class WeeklyWorkoutsService {
 
     public enum Error: Swift.Error, Equatable {
         case requestFailure
+        case invalidData
     }
 
     public init(url: URL, client: HTTPClient, store: WeeklyWorkoutsStore, calendar: Calendar, currentDate: @escaping () -> Date) {
@@ -21,8 +22,8 @@ public final class WeeklyWorkoutsService {
     }
 
     public func loadWeek() async throws -> [WorkoutDay] {
-        _ = try await fetch()
-        return []
+        let (data, response) = try await fetch()
+        return try map(data, from: response)
     }
 
     private func fetch() async throws -> (Data, HTTPURLResponse) {
@@ -32,6 +33,14 @@ public final class WeeklyWorkoutsService {
             throw cancellation
         } catch {
             throw Error.requestFailure
+        }
+    }
+
+    private func map(_ data: Data, from response: HTTPURLResponse) throws -> [WorkoutDay] {
+        do {
+            return try WorkoutDaysMapper.map(data, from: response)
+        } catch {
+            throw Error.invalidData
         }
     }
 }

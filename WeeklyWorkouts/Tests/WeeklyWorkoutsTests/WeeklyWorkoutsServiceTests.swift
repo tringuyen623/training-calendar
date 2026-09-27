@@ -42,6 +42,15 @@ struct WeeklyWorkoutsServiceTests {
         }
     }
 
+    @Test func loadWeek_onEmptyCache_deliversInvalidDataOnInvalidResponse() async {
+        let (sut, client, _) = makeSUT()
+        client.stub(statusCode: 200, data: Data("invalid json".utf8))
+
+        await #expect(throws: WeeklyWorkoutsService.Error.invalidData) {
+            try await sut.loadWeek()
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
