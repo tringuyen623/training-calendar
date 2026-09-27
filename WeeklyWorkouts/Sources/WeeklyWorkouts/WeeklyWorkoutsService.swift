@@ -26,7 +26,8 @@ public final class WeeklyWorkoutsService {
         let days = try map(data, from: response)
         // The loaded week is still delivered when saving fails: the next load saves it again.
         try? await local.save(days)
-        return days
+        let marks = try await store.retrieveAllMarks()
+        return applying(marks, to: days)
     }
 
     public func loadCachedWeek() async throws -> [WorkoutDay] {

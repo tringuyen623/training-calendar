@@ -51,6 +51,25 @@ struct WeeklyWorkoutsServiceTests {
         }
     }
 
+    @Test func loadWeek_onEmptyCache_deliversServerWeekWithMarksApplied() async throws {
+        let (sut, client, store) = makeSUT()
+        let serverWeek = makeServerWeek()
+        client.stub(statusCode: 200, data: serverWeek.json)
+        store.stubMarksRetrieval(with: ["assigned-id": true, "completed-id": false])
+
+        let days = try await sut.loadWeek()
+
+        #expect(days == [
+            WorkoutDay(id: "monday-id", day: 0, workouts: [
+                serverWeek.days[0].workouts[0].with(status: .completed),
+                serverWeek.days[0].workouts[1],
+            ]),
+            WorkoutDay(id: "friday-id", day: 4, workouts: [
+                serverWeek.days[1].workouts[0].with(status: .assigned),
+            ]),
+        ])
+    }
+
     @Test func loadWeek_onEmptyCache_replacesCacheWithRawServerWeek() async {
         let (sut, client, store) = makeSUT()
         let serverWeek = makeServerWeek()
