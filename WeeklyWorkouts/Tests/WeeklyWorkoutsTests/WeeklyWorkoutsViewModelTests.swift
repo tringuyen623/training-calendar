@@ -29,6 +29,22 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(loader.loadCallCount == 1)
     }
 
+    @Test func loadWeek_showsLoadingWithTheSevenDaysUntilLoadCompletes() async {
+        let (sut, loader, _) = makeSUT()
+        loader.stubPendingLoad()
+
+        let loading = Task { await sut.send(.loadWeek) }
+        await loader.waitForPendingLoads()
+
+        #expect(sut.isLoading == true)
+        #expect(sut.days == emptyWeekOfWednesday())
+
+        loader.completePendingLoads(with: .success([]))
+        await loading.value
+
+        #expect(sut.isLoading == false)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
@@ -63,10 +79,36 @@ struct WeeklyWorkoutsViewModelTests {
 @MainActor
 private final class WeekLoaderSpy {
     private(set) var loadCallCount = 0
+    private var result: Result<[WorkoutDay], Error>? = .success([])
+    private var pendingLoads: [CheckedContinuation<[WorkoutDay], Error>] = []
+    private var pendingLoadWaiters: [CheckedContinuation<Void, Never>] = []
+
+    /// Loads stay pending until `completePendingLoads(with:)`.
+    func stubPendingLoad() {
+        result = nil
+    }
+
+    func waitForPendingLoads(count: Int = 1) async {
+        while pendingLoads.count < count {
+            await withCheckedContinuation { pendingLoadWaiters.append($0) }
+        }
+    }
+
+    func completePendingLoads(with result: Result<[WorkoutDay], Error>) {
+        pendingLoads.forEach { $0.resume(with: result) }
+        pendingLoads.removeAll()
+    }
 
     func load() async throws -> [WorkoutDay] {
         loadCallCount += 1
-        return []
+        if let result {
+            return try result.get()
+        }
+        return try await withCheckedThrowingContinuation { continuation in
+            pendingLoads.append(continuation)
+            pendingLoadWaiters.forEach { $0.resume() }
+            pendingLoadWaiters.removeAll()
+        }
     }
 }
 
