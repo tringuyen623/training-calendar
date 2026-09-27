@@ -118,7 +118,7 @@ struct LoadWorkoutsFromCacheUseCaseTests {
     }
 
     @Test func load_treatsMondayAsFirstWeekdayRegardlessOfCalendarSettings() async throws {
-        var sundayFirstCalendar = Self.makeCalendar()
+        var sundayFirstCalendar = makeCalendar()
         sundayFirstCalendar.firstWeekday = 1
         var now = date(2026, 10, 4, 12, 0)
         let (sut, store) = makeSUT(calendar: sundayFirstCalendar, currentDate: { now })
@@ -144,20 +144,5 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         let store = WorkoutsStoreSpy()
         let sut = LocalWorkoutsLoader(store: store, calendar: calendar, currentDate: currentDate)
         return (sut, store)
-    }
-
-    private static func makeCalendar() -> Calendar {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/Paris")!
-        calendar.firstWeekday = 2
-        return calendar
-    }
-
-    private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int = 0, _ minute: Int = 0, _ second: Int = 0) -> Date {
-        Self.makeCalendar().date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute, second: second))!
-    }
-
-    private func uniqueCache(savedAt timestamp: Date) -> CachedWorkouts {
-        CachedWorkouts(days: uniqueDays(), timestamp: timestamp)
     }
 }
