@@ -50,18 +50,18 @@ struct LoadWorkoutsFromCacheUseCaseTests {
     @Test func load_deliversCachedWorkoutsOnCacheSavedInCurrentWeek() async throws {
         let now = date(2026, 10, 2, 9, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        let days = uniqueDays()
-        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 9, 30, 18, 0)))
+        let cache = uniqueCache(savedAt: date(2026, 9, 30, 18, 0))
+        store.stubRetrieval(with: cache)
 
         let receivedDays = try await sut.load()
 
-        #expect(receivedDays == days)
+        #expect(receivedDays == cache.days)
     }
 
     @Test func load_deliversNoWorkoutsOnCacheSavedAtEndOfPreviousWeek() async throws {
         let now = date(2026, 9, 28, 0, 0, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        store.stubRetrieval(with: CachedWorkouts(days: uniqueDays(), timestamp: date(2026, 9, 27, 23, 59, 59)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 27, 23, 59, 59)))
 
         let receivedDays = try await sut.load()
 
@@ -71,29 +71,29 @@ struct LoadWorkoutsFromCacheUseCaseTests {
     @Test func load_deliversCachedWorkoutsOnCacheSavedAtStartOfCurrentWeek() async throws {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        let days = uniqueDays()
-        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 9, 28, 0, 0, 0)))
+        let cache = uniqueCache(savedAt: date(2026, 9, 28, 0, 0, 0))
+        store.stubRetrieval(with: cache)
 
         let receivedDays = try await sut.load()
 
-        #expect(receivedDays == days)
+        #expect(receivedDays == cache.days)
     }
 
     @Test func load_deliversCachedWorkoutsOnSundayForCacheSavedOnMondayOfSameWeek() async throws {
         let now = date(2026, 10, 4, 23, 59, 59)
         let (sut, store) = makeSUT(currentDate: { now })
-        let days = uniqueDays()
-        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 9, 28, 0, 0, 0)))
+        let cache = uniqueCache(savedAt: date(2026, 9, 28, 0, 0, 0))
+        store.stubRetrieval(with: cache)
 
         let receivedDays = try await sut.load()
 
-        #expect(receivedDays == days)
+        #expect(receivedDays == cache.days)
     }
 
     @Test func load_deliversNoWorkoutsOnCacheSavedInPreviousWeekLessThanSevenDaysAgo() async throws {
         let now = date(2026, 9, 29, 9, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        store.stubRetrieval(with: CachedWorkouts(days: uniqueDays(), timestamp: date(2026, 9, 25, 18, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
 
         let receivedDays = try await sut.load()
 
@@ -103,19 +103,19 @@ struct LoadWorkoutsFromCacheUseCaseTests {
     @Test func load_deliversCachedWorkoutsOnCacheSavedInWeekSpanningYearBoundary() async throws {
         let now = date(2027, 1, 2, 9, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        let days = uniqueDays()
-        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 12, 31, 18, 0)))
+        let cache = uniqueCache(savedAt: date(2026, 12, 31, 18, 0))
+        store.stubRetrieval(with: cache)
 
         let receivedDays = try await sut.load()
 
-        #expect(receivedDays == days)
+        #expect(receivedDays == cache.days)
     }
 
     @Test func load_deliversNoWorkoutsOnCacheSavedInSameWeekOfPreviousYear() async throws {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
         let fiftyTwoWeeksEarlier = date(2025, 10, 1, 12, 0)
-        store.stubRetrieval(with: CachedWorkouts(days: uniqueDays(), timestamp: fiftyTwoWeeksEarlier))
+        store.stubRetrieval(with: uniqueCache(savedAt: fiftyTwoWeeksEarlier))
 
         let receivedDays = try await sut.load()
 
@@ -125,18 +125,18 @@ struct LoadWorkoutsFromCacheUseCaseTests {
     @Test func load_deliversCachedWorkoutsOnCacheSavedLaterInCurrentWeek() async throws {
         let now = date(2026, 9, 29, 9, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        let days = uniqueDays()
-        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 10, 3, 18, 0)))
+        let cache = uniqueCache(savedAt: date(2026, 10, 3, 18, 0))
+        store.stubRetrieval(with: cache)
 
         let receivedDays = try await sut.load()
 
-        #expect(receivedDays == days)
+        #expect(receivedDays == cache.days)
     }
 
     @Test func load_deliversNoWorkoutsOnCacheSavedInFutureWeek() async throws {
         let now = date(2026, 10, 4, 23, 59, 59)
         let (sut, store) = makeSUT(currentDate: { now })
-        store.stubRetrieval(with: CachedWorkouts(days: uniqueDays(), timestamp: date(2026, 10, 5, 0, 0, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 10, 5, 0, 0, 0)))
 
         let receivedDays = try await sut.load()
 
@@ -146,19 +146,19 @@ struct LoadWorkoutsFromCacheUseCaseTests {
     @Test func load_usesCalendarTimeZoneForWeekBoundary() async throws {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        let days = uniqueDays()
         let mondayInCalendarTimeZoneButSundayInUTC = date(2026, 9, 28, 0, 30)
-        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: mondayInCalendarTimeZoneButSundayInUTC))
+        let cache = uniqueCache(savedAt: mondayInCalendarTimeZoneButSundayInUTC)
+        store.stubRetrieval(with: cache)
 
         let receivedDays = try await sut.load()
 
-        #expect(receivedDays == days)
+        #expect(receivedDays == cache.days)
     }
 
     @Test func load_usesCurrentDateAtLoadTime() async throws {
         var now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        store.stubRetrieval(with: CachedWorkouts(days: uniqueDays(), timestamp: date(2026, 9, 30, 9, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 30, 9, 0)))
 
         now = date(2026, 10, 5, 9, 0)
         let receivedDays = try await sut.load()
@@ -187,7 +187,7 @@ struct LoadWorkoutsFromCacheUseCaseTests {
     @Test func load_hasNoSideEffectsOnValidCache() async {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        store.stubRetrieval(with: CachedWorkouts(days: uniqueDays(), timestamp: date(2026, 9, 29, 9, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 29, 9, 0)))
 
         _ = try? await sut.load()
 
@@ -197,7 +197,7 @@ struct LoadWorkoutsFromCacheUseCaseTests {
     @Test func load_hasNoSideEffectsOnExpiredCache() async {
         let now = date(2026, 9, 30, 12, 0)
         let (sut, store) = makeSUT(currentDate: { now })
-        store.stubRetrieval(with: CachedWorkouts(days: uniqueDays(), timestamp: date(2026, 9, 25, 18, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
 
         _ = try? await sut.load()
 
@@ -209,16 +209,16 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         sundayFirstCalendar.firstWeekday = 1
         var now = date(2026, 10, 4, 12, 0)
         let (sut, store) = makeSUT(calendar: sundayFirstCalendar, currentDate: { now })
-        let days = uniqueDays()
+        let cacheSavedOnMonday = uniqueCache(savedAt: date(2026, 9, 28, 9, 0))
 
-        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 9, 28, 9, 0)))
+        store.stubRetrieval(with: cacheSavedOnMonday)
         let daysOnSunday = try await sut.load()
 
         now = date(2026, 9, 28, 9, 0)
-        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 9, 27, 12, 0)))
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 27, 12, 0)))
         let daysOnMonday = try await sut.load()
 
-        #expect(daysOnSunday == days, "Sunday belongs to the week started on Monday")
+        #expect(daysOnSunday == cacheSavedOnMonday.days, "Sunday belongs to the week started on Monday")
         #expect(daysOnMonday.isEmpty, "Monday starts a new week")
     }
 
@@ -242,6 +242,10 @@ struct LoadWorkoutsFromCacheUseCaseTests {
 
     private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int = 0, _ minute: Int = 0, _ second: Int = 0, calendar: Calendar = makeCalendar()) -> Date {
         calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute, second: second))!
+    }
+
+    private func uniqueCache(savedAt timestamp: Date) -> CachedWorkouts {
+        CachedWorkouts(days: uniqueDays(), timestamp: timestamp)
     }
 
     private func uniqueDays() -> [WorkoutDay] {
