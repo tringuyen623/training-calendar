@@ -162,6 +162,17 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(toggler.receivedToggles.isEmpty)
     }
 
+    @Test(arguments: [true, false])
+    func toggle_requestsToggleWithWorkoutsCurrentCompletion(isCompleted: Bool) async {
+        let (sut, _, toggler) = makeSUT()
+        let workout = makeWorkout(status: isCompleted ? .completed : .assigned)
+        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+
+        await sut.send(.toggle(workoutID: workout.id))
+
+        #expect(toggler.receivedToggles == [.init(workoutID: workout.id, isCompleted: isCompleted)])
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {

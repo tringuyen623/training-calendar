@@ -6,12 +6,15 @@ import Observation
 public final class WeeklyWorkoutsViewModel {
     public enum Action: Equatable, Sendable {
         case loadWeek
+        case toggle(workoutID: String)
         case dismissError
     }
 
     public private(set) var days: [DayViewData] = []
     public private(set) var isLoading = false
     public private(set) var errorMessage: String?
+
+    private var workoutDays: [WorkoutDay] = []
 
     private let loadWeek: () async throws -> [WorkoutDay]
     private let toggleCompletion: (_ workoutID: String, _ isCompleted: Bool) async throws -> Bool
@@ -35,6 +38,8 @@ public final class WeeklyWorkoutsViewModel {
         switch action {
         case .loadWeek:
             await load()
+        case let .toggle(workoutID):
+            await toggle(workoutID)
         case .dismissError:
             errorMessage = nil
         }
@@ -59,7 +64,13 @@ public final class WeeklyWorkoutsViewModel {
         }
     }
 
+    private func toggle(_ workoutID: String) async {
+        guard let workout = workoutDays.lazy.flatMap(\.workouts).first(where: { $0.id == workoutID }) else { return }
+        _ = try? await toggleCompletion(workoutID, workout.status == .completed)
+    }
+
     private func show(_ workoutDays: [WorkoutDay]) {
+        self.workoutDays = workoutDays
         days = WeekSchedule.days(for: workoutDays, now: now(), calendar: calendar)
             .enumerated()
             .map { index, day in dayViewData(for: day, at: index) }
