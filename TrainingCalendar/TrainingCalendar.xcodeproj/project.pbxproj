@@ -6,6 +6,11 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F4214240306900A0008CE264 /* WeeklyWorkouts in Frameworks */ = {isa = PBXBuildFile; productRef = F4214242306900A0008CE264 /* WeeklyWorkouts */; };
+		F4214241306900A0008CE264 /* WeeklyWorkoutsUI in Frameworks */ = {isa = PBXBuildFile; productRef = F4214243306900A0008CE264 /* WeeklyWorkoutsUI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F42141C830681FEE008CE264 /* TrainingCalendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrainingCalendar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F42142303068CB10008CE264 /* WeeklyWorkouts */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = WeeklyWorkouts; path = ../WeeklyWorkouts; sourceTree = SOURCE_ROOT; };
@@ -23,6 +28,8 @@
 		F42141C530681FEE008CE264 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				F4214240306900A0008CE264 /* WeeklyWorkouts in Frameworks */,
+				F4214241306900A0008CE264 /* WeeklyWorkoutsUI in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -62,6 +69,10 @@
 				F42141CA30681FEE008CE264 /* TrainingCalendar */,
 			);
 			name = TrainingCalendar;
+			packageProductDependencies = (
+				F4214242306900A0008CE264 /* WeeklyWorkouts */,
+				F4214243306900A0008CE264 /* WeeklyWorkoutsUI */,
+			);
 			productName = TrainingCalendar;
 			productReference = F42141C830681FEE008CE264 /* TrainingCalendar.app */;
 			productType = "com.apple.product-type.application";
@@ -326,6 +337,17 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F4214242306900A0008CE264 /* WeeklyWorkouts */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = WeeklyWorkouts;
+		};
+		F4214243306900A0008CE264 /* WeeklyWorkoutsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = WeeklyWorkoutsUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F42141C030681FEE008CE264 /* Project object */;
 	validationLevel = 1;
