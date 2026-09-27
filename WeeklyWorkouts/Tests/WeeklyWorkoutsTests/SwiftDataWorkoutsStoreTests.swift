@@ -194,6 +194,15 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(marks == ["workout-x": true])
     }
 
+    @Test func changes_notifiesAfterInsert() async throws {
+        let sut = try makeSUT()
+        let changes = await sut.changes()
+
+        try await sut.insert(daysOutOfNaturalOrder(), timestamp: Date(timeIntervalSince1970: 1_000))
+
+        #expect(await receivesChange(from: changes))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
@@ -217,6 +226,20 @@ struct SwiftDataWorkoutsStoreTests {
 
     private func otherModelsCount(in container: ModelContainer) throws -> Int {
         try ModelContext(container).fetchCount(FetchDescriptor<OtherModel>())
+    }
+
+    /// Waits a moment for a change, since a stream that never delivers would otherwise wait forever.
+    private func receivesChange(from changes: AsyncStream<Void>) async -> Bool {
+        await withTaskGroup(of: Bool.self) { group in
+            group.addTask { await changes.first { true } != nil }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(1))
+                return false
+            }
+            let received = await group.next() ?? false
+            group.cancelAll()
+            return received
+        }
     }
 
     /// Saved order differs from both `day` order and ID order, so only a store keeping the saved order passes.
