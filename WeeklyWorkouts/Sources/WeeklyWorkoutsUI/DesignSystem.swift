@@ -83,8 +83,8 @@ enum Metrics {
         static let tickWidth: CGFloat = 11.4
         /// 1 − 32.5% − 32.5% of 24.
         static let tickHeight: CGFloat = 8.4
-        /// Estimated from the frame; not in the specs.
-        static let tickLineWidth: CGFloat = 2.5
+        /// Measured on the frame (about 4px at 2.2x across a 45° stroke); not in the specs.
+        static let tickLineWidth: CGFloat = 2
     }
 
     enum Separator {
