@@ -21,6 +21,14 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.errorMessage == nil)
     }
 
+    @Test func loadWeek_requestsLoadOnce() async {
+        let (sut, loader, _) = makeSUT()
+
+        await sut.send(.loadWeek)
+
+        #expect(loader.loadCallCount == 1)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(

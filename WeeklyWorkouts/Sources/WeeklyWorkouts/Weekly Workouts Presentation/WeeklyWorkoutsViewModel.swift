@@ -4,6 +4,10 @@ import Observation
 @MainActor
 @Observable
 public final class WeeklyWorkoutsViewModel {
+    public enum Action: Equatable, Sendable {
+        case loadWeek
+    }
+
     public private(set) var days: [DayViewData] = []
     public private(set) var isLoading = false
     public private(set) var errorMessage: String?
@@ -24,6 +28,13 @@ public final class WeeklyWorkoutsViewModel {
         self.calendar = calendar
         self.now = now
         show([])
+    }
+
+    public func send(_ action: Action) async {
+        switch action {
+        case .loadWeek:
+            _ = try? await loadWeek()
+        }
     }
 
     private func show(_ workoutDays: [WorkoutDay]) {
