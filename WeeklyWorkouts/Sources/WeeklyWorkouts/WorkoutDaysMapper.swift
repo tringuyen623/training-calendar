@@ -6,26 +6,39 @@ enum WorkoutDaysMapper {
     }
 
     private struct RemoteWorkoutDay: Decodable {
-        let _id: String
+        let id: String
         let day: Int
         let assignments: [RemoteWorkout]
+
+        private enum CodingKeys: String, CodingKey {
+            case id = "_id"
+            case day
+            case assignments
+        }
 
         func toModel() throws -> WorkoutDay {
             guard (0...6).contains(day) else {
                 throw InvalidData()
             }
-            return WorkoutDay(id: _id, day: day, workouts: try assignments.map { try $0.toModel() })
+            return WorkoutDay(id: id, day: day, workouts: try assignments.map { try $0.toModel() })
         }
     }
 
     private struct RemoteWorkout: Decodable {
-        let _id: String
+        let id: String
         let title: String
         let status: Int
-        let total_exercise: Int
+        let exerciseCount: Int
+
+        private enum CodingKeys: String, CodingKey {
+            case id = "_id"
+            case title
+            case status
+            case exerciseCount = "total_exercise"
+        }
 
         func toModel() throws -> Workout {
-            Workout(id: _id, title: title, status: try mappedStatus(), exerciseCount: total_exercise)
+            Workout(id: id, title: title, status: try mappedStatus(), exerciseCount: exerciseCount)
         }
 
         private func mappedStatus() throws -> Workout.Status {
