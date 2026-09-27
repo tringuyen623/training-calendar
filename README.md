@@ -162,10 +162,10 @@ Given a workout that is completed
 3. System validates the cache was saved in the current week.
 
 #### Retrieval error course (sad path):
-1. System deletes the cache.
+1. System delivers error. Nothing is deleted: the next successful remote load replaces the cache.
 
 #### Cache from a previous week course (sad path):
-1. System deletes the cached workouts and completion marks.
+1. System deletes the completion marks, then the cached workouts.
 
 ---
 
