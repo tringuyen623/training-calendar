@@ -336,6 +336,49 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.receivedMessages == [.retrieve, .deleteAllMarks, .deleteCachedWorkouts])
     }
 
+    // MARK: - Toggle completion
+
+    @Test(arguments: [true, false])
+    func toggle_requestsMarkInsertionWithInvertedCompletionForWorkout(isCompleted: Bool) async {
+        let (sut, _, store) = makeSUT()
+        let workoutID = UUID().uuidString
+
+        _ = try? await sut.toggle(workoutID: workoutID, isCompleted: isCompleted)
+
+        #expect(store.receivedMessages == [.insertMark(!isCompleted, workoutID)])
+    }
+
+    @Test(arguments: [true, false])
+    func toggle_deliversNewCompletionOnSuccessfulInsertion(isCompleted: Bool) async throws {
+        let (sut, _, _) = makeSUT()
+
+        let newCompletion = try await sut.toggle(workoutID: UUID().uuidString, isCompleted: isCompleted)
+
+        #expect(newCompletion == !isCompleted)
+    }
+
+    @Test func toggle_failsOnInsertionError() async {
+        let (sut, _, store) = makeSUT()
+        let insertionError = anyNSError()
+        store.stubMarkInsertion(with: insertionError)
+
+        await #expect {
+            try await sut.toggle(workoutID: UUID().uuidString, isCompleted: false)
+        } throws: { error in
+            error as NSError == insertionError
+        }
+    }
+
+    @Test func toggle_hasNoSideEffectsBeyondInsertionOnInsertionError() async {
+        let (sut, _, store) = makeSUT()
+        let workoutID = UUID().uuidString
+        store.stubMarkInsertion(with: anyNSError())
+
+        _ = try? await sut.toggle(workoutID: workoutID, isCompleted: false)
+
+        #expect(store.receivedMessages == [.insertMark(true, workoutID)])
+    }
+
     // MARK: - Helpers
 
     private func completePendingRefresh(of sut: WeeklyWorkoutsService, on client: HTTPClientSpy) async {

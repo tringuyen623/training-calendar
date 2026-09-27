@@ -50,6 +50,13 @@ public final class WeeklyWorkoutsService {
         try await local.validateCache()
     }
 
+    /// Saves the inverted completion as the workout's mark and delivers it.
+    public func toggle(workoutID: String, isCompleted: Bool) async throws -> Bool {
+        let newCompletion = !isCompleted
+        try await store.insertMark(newCompletion, for: workoutID)
+        return newCompletion
+    }
+
     /// The cached week of the current week, or no days when there's none.
     /// An unreadable cache counts as no cached week: the API load replaces it, and its failure reaches the caller.
     private func cachedWeek() async -> [WorkoutDay] {
