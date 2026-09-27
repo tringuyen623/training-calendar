@@ -30,6 +30,15 @@ struct ApplyCompletionMarksUseCaseTests {
         #expect(marksStore.receivedMessages == [.retrieveAllMarks])
     }
 
+    @Test func apply_hasNoSideEffectsOnSuccessfulRetrieval() async {
+        let (sut, marksStore) = makeSUT()
+        marksStore.stubRetrieval(with: [UUID().uuidString: true])
+
+        _ = try? await sut.apply(to: uniqueDays())
+
+        #expect(marksStore.receivedMessages == [.retrieveAllMarks])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> (sut: CompletionMarksApplier, marksStore: CompletionMarksStoreSpy) {
