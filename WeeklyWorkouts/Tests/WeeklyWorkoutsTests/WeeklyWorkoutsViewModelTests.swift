@@ -173,6 +173,22 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(toggler.receivedToggles == [.init(workoutID: workout.id, isCompleted: isCompleted)])
     }
 
+    @Test(arguments: zip([Workout.Status.assigned, .completed], [WorkoutCardViewData.Status.completed, .missed]))
+    func toggle_showsNewCompletionWhileSaving(status: Workout.Status, expectedStatus: WorkoutCardViewData.Status) async {
+        let (sut, _, toggler) = makeSUT()
+        let workout = makeWorkout(status: status)
+        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+        toggler.stubPendingToggle()
+
+        let toggling = Task { await sut.send(.toggle(workoutID: workout.id)) }
+        await toggler.waitForPendingToggle()
+
+        #expect(sut.days[tuesday].workouts.map(\.status) == [expectedStatus])
+
+        toggler.completePendingToggle(with: .success(status != .completed))
+        await toggling.value
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {
@@ -263,9 +279,35 @@ private final class CompletionTogglerSpy {
     }
 
     private(set) var receivedToggles: [Toggle] = []
+    private var isPending = false
+    private var pendingToggle: CheckedContinuation<Bool, Error>?
+    private var pendingToggleWaiters: [CheckedContinuation<Void, Never>] = []
+
+    /// Toggles stay pending until `completePendingToggle(with:)`.
+    func stubPendingToggle() {
+        isPending = true
+    }
+
+    func waitForPendingToggle() async {
+        while pendingToggle == nil {
+            await withCheckedContinuation { pendingToggleWaiters.append($0) }
+        }
+    }
+
+    func completePendingToggle(with result: Result<Bool, Error>) {
+        pendingToggle?.resume(with: result)
+        pendingToggle = nil
+    }
 
     func toggle(workoutID: String, isCompleted: Bool) async throws -> Bool {
         receivedToggles.append(Toggle(workoutID: workoutID, isCompleted: isCompleted))
-        return !isCompleted
+        guard isPending else {
+            return !isCompleted
+        }
+        return try await withCheckedThrowingContinuation { continuation in
+            pendingToggle = continuation
+            pendingToggleWaiters.forEach { $0.resume() }
+            pendingToggleWaiters.removeAll()
+        }
     }
 }
