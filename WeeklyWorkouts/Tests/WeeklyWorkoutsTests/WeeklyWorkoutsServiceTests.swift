@@ -168,6 +168,19 @@ struct WeeklyWorkoutsServiceTests {
         #expect(days == week)
     }
 
+    @Test func loadCachedWeek_deliversMarksRetrievalError() async {
+        let (sut, _, store) = makeSUT()
+        let retrievalError = anyNSError()
+        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
+        store.stubMarksRetrieval(with: retrievalError)
+
+        await #expect {
+            try await sut.loadCachedWeek()
+        } throws: { error in
+            error as NSError == retrievalError
+        }
+    }
+
     // MARK: - Helpers
 
     private func validCache(_ days: [WorkoutDay]) -> CachedWorkouts {
