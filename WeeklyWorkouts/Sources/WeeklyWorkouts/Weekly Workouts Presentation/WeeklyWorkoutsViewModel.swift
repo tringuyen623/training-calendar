@@ -67,27 +67,13 @@ public final class WeeklyWorkoutsViewModel {
     private func toggle(_ workoutID: String) async {
         guard let workout = workoutDays.lazy.flatMap(\.workouts).first(where: { $0.id == workoutID }) else { return }
         let isCompleted = workout.isCompleted
-        show(settingCompletion(!isCompleted, ofWorkout: workoutID, in: workoutDays))
+        let newCompletion = !isCompleted
+        show(workoutDays.applying([workoutID: newCompletion]))
         do {
             _ = try await service.toggle(workoutID: workoutID, isCompleted: isCompleted)
         } catch {
-            show(settingCompletion(isCompleted, ofWorkout: workoutID, in: workoutDays))
+            show(workoutDays.applying([workoutID: isCompleted]))
             errorMessage = "Couldn't save your change"
-        }
-    }
-
-    // Mirrors a completion mark: completed, or not completed so that the week rules derive missed, assigned or upcoming.
-    private func settingCompletion(_ isCompleted: Bool, ofWorkout workoutID: String, in workoutDays: [WorkoutDay]) -> [WorkoutDay] {
-        workoutDays.map { day in
-            WorkoutDay(id: day.id, day: day.day, workouts: day.workouts.map { workout in
-                guard workout.id == workoutID else { return workout }
-                return Workout(
-                    id: workout.id,
-                    title: workout.title,
-                    status: isCompleted ? .completed : .assigned,
-                    exerciseCount: workout.exerciseCount
-                )
-            })
         }
     }
 
