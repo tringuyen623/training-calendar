@@ -24,7 +24,11 @@ enum WorkoutDaysMapper {
         guard response.statusCode == 200 else {
             throw InvalidData()
         }
-        _ = try JSONDecoder().decode(Root.self, from: data)
+        let root = try JSONDecoder().decode(Root.self, from: data)
+        let statuses = root.data.flatMap(\.assignments).map(\.status)
+        guard statuses.allSatisfy((0...2).contains) else {
+            throw InvalidData()
+        }
         return []
     }
 }

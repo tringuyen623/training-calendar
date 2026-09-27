@@ -80,6 +80,17 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         }
     }
 
+    @Test(arguments: [-1, 3])
+    func load_deliversInvalidDataErrorOn200HTTPResponseWithUnknownStatus(status: Int) async {
+        let (sut, client) = makeSUT()
+        let day = makeDayJSON(workouts: [makeWorkoutJSON(status: status)])
+        client.result = .success((makeJSON(days: [day]), HTTPURLResponse(statusCode: 200)))
+
+        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
+            try await sut.load()
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (sut: RemoteWorkoutsLoader, client: HTTPClientSpy) {
