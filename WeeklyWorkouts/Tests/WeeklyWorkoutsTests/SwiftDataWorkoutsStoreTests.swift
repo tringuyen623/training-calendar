@@ -223,6 +223,17 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(await !receivesChange(from: changes))
     }
 
+    @Test func changes_notifiesEveryObserver() async throws {
+        let sut = try makeSUT()
+        let firstChanges = await sut.changes()
+        let secondChanges = await sut.changes()
+
+        try await sut.insert(daysOutOfNaturalOrder(), timestamp: Date(timeIntervalSince1970: 1_000))
+
+        #expect(await receivesChange(from: firstChanges))
+        #expect(await receivesChange(from: secondChanges))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
