@@ -34,6 +34,18 @@ struct CacheWorkoutsUseCaseTests {
         #expect(store.receivedMessages == [.deleteCachedWorkouts, .insert(days, now)])
     }
 
+    @Test func save_failsOnDeletionError() async {
+        let (sut, store) = makeSUT()
+        let deletionError = anyNSError()
+        store.stubDeletion(with: deletionError)
+
+        await #expect {
+            try await sut.save(uniqueDays())
+        } throws: { error in
+            error as NSError == deletionError
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(

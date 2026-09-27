@@ -20,9 +20,7 @@ public final class LocalWorkoutsLoader: WorkoutsLoader {
     }
 
     public func save(_ days: [WorkoutDay]) async throws {
-        do {
-            try await store.deleteCachedWorkouts()
-            try? await store.insert(days, timestamp: currentDate())
-        } catch {}
+        try await store.deleteCachedWorkouts()
+        try? await store.insert(days, timestamp: currentDate())
     }
 }
