@@ -38,15 +38,13 @@ enum Typography {
 /// Every size of the week calendar, from the Figma specs (a 375pt-wide frame).
 /// Horizontal positions and widths are fractions of the screen width; vertical sizes are points.
 enum Metrics {
-    static let designWidth: CGFloat = 375
-
     enum Row {
-        /// 19pt of 375 (CSS: 5.07%).
-        static let dateLeading: CGFloat = 19 / designWidth
-        /// 71pt of 375 (CSS: 18.93%): the 36pt date column, then 16pt before the card.
-        static let cardLeading: CGFloat = 71 / designWidth
-        /// 283pt of 375, leaving 21pt (5.6%) on the trailing side.
-        static let cardWidth: CGFloat = 283 / designWidth
+        /// CSS: 5.07% of 375.
+        static let leadingPadding: CGFloat = 19
+        /// From the date column's leading edge to the card: the 36pt date group, then 16pt.
+        static let dateColumnWidth: CGFloat = 52
+        /// CSS: 5.6% of 375. The card fills the rest (283pt on a 375pt screen).
+        static let trailingPadding: CGFloat = 21
         /// 17.86% of the 112pt row, above and below the cards.
         static let verticalPadding: CGFloat = 20
         /// 548 − (468 + 72) between the cards of one day.
@@ -54,8 +52,8 @@ enum Metrics {
         /// A one-card row is 112pt including its bottom separator (CSS: separator at 99.11% of 112): 20 + 72 + 20,
         /// with the separator over its bottom point. Rows stack without overlapping.
         static let minHeight: CGFloat = verticalPadding + Card.height + verticalPadding
-        /// The date column group is 46pt tall, centered on the first card (33pt from the row's top).
-        static let dateColumnHeight: CGFloat = 46
+        /// The 46pt date column group is centered on the first card: (72 − 46) / 2 below the row's top padding (33pt from the row's top).
+        static let dateTopInset: CGFloat = (Card.height - 46) / 2
     }
 
     enum Card {
