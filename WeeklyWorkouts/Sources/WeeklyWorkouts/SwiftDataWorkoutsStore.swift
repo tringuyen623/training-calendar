@@ -15,6 +15,7 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
         try saveOrRollback {
             try deleteCache()
         }
+        notifyChange()
     }
 
     public func insert(_ days: [WorkoutDay], timestamp: Date) async throws {

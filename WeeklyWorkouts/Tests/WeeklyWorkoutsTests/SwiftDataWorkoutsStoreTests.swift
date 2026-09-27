@@ -203,6 +203,16 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(await receivesChange(from: changes))
     }
 
+    @Test func changes_notifiesAfterDelete() async throws {
+        let sut = try makeSUT()
+        try await sut.insert(daysOutOfNaturalOrder(), timestamp: Date(timeIntervalSince1970: 1_000))
+        let changes = await sut.changes()
+
+        try await sut.deleteCachedWorkouts()
+
+        #expect(await receivesChange(from: changes))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
