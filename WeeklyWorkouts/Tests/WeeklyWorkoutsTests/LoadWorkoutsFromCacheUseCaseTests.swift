@@ -204,6 +204,24 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         #expect(store.receivedMessages == [.retrieve])
     }
 
+    @Test func load_treatsMondayAsFirstWeekdayRegardlessOfCalendarSettings() async throws {
+        var sundayFirstCalendar = Self.makeCalendar()
+        sundayFirstCalendar.firstWeekday = 1
+        var now = date(2026, 10, 4, 12, 0)
+        let (sut, store) = makeSUT(calendar: sundayFirstCalendar, currentDate: { now })
+        let days = uniqueDays()
+
+        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 9, 28, 9, 0)))
+        let daysOnSunday = try await sut.load()
+
+        now = date(2026, 9, 28, 9, 0)
+        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 9, 27, 12, 0)))
+        let daysOnMonday = try await sut.load()
+
+        #expect(daysOnSunday == days, "Sunday belongs to the week started on Monday")
+        #expect(daysOnMonday.isEmpty, "Monday starts a new week")
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(

@@ -19,6 +19,8 @@ public final class LocalWorkoutsLoader: WorkoutsLoader {
     }
 
     private func isInCurrentWeek(_ timestamp: Date) -> Bool {
-        calendar.isDate(timestamp, equalTo: currentDate(), toGranularity: .weekOfYear)
+        var calendar = calendar
+        calendar.firstWeekday = 2
+        return calendar.isDate(timestamp, equalTo: currentDate(), toGranularity: .weekOfYear)
     }
 }
