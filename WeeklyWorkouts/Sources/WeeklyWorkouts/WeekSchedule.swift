@@ -21,6 +21,7 @@ public struct ScheduledWorkout: Equatable, Sendable {
 }
 
 public enum WeekSchedule {
+    // Generated with Claude. Adjusted to handle a Sunday-first calendar and a time of day in `now`: days are compared at their start in the calendar's time zone.
     public static func days(for days: [WorkoutDay], now: Date, calendar: Calendar) -> [ScheduledDay] {
         let monday = MondayFirstWeek.start(of: now, in: calendar)
         let today = calendar.startOfDay(for: now)
@@ -29,10 +30,19 @@ public enum WeekSchedule {
             let workouts = days.first { $0.day == index }?.workouts ?? []
             return ScheduledDay(
                 date: date,
-                isToday: calendar.isDate(date, inSameDayAs: now),
-                workouts: workouts.map { ScheduledWorkout(id: $0.id, title: $0.title, exerciseCount: $0.exerciseCount, status: status(of: $0, on: date, today: today)) }
+                isToday: date == today,
+                workouts: workouts.map { scheduled($0, on: date, today: today) }
             )
         }
+    }
+
+    private static func scheduled(_ workout: Workout, on date: Date, today: Date) -> ScheduledWorkout {
+        ScheduledWorkout(
+            id: workout.id,
+            title: workout.title,
+            exerciseCount: workout.exerciseCount,
+            status: status(of: workout, on: date, today: today)
+        )
     }
 
     private static func status(of workout: Workout, on date: Date, today: Date) -> ScheduledWorkout.Status {
