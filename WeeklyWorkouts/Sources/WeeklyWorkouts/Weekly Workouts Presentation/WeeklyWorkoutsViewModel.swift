@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// The week screen's state: always the seven days of the current week, with the delivered workouts placed into them.
-/// It only formats what `WeekSchedule` derives; it loads through the injected loader and saves completions through the injected toggler.
+/// It only formats what `WeekSchedule` derives; it loads through the injected service and saves completions through the injected toggler.
 @MainActor
 @Observable
 public final class WeeklyWorkoutsViewModel {
@@ -19,18 +19,18 @@ public final class WeeklyWorkoutsViewModel {
     /// The week behind `days`, kept to toggle a workout from its current completion.
     @ObservationIgnored private var workoutDays: [WorkoutDay] = []
 
-    private let loader: WorkoutsLoader
+    private let service: WeeklyWorkoutsService
     private let toggler: WorkoutCompletionToggler
     private let calendar: Calendar
     private let now: () -> Date
 
     public init(
-        loader: WorkoutsLoader,
+        service: WeeklyWorkoutsService,
         toggler: WorkoutCompletionToggler,
         calendar: Calendar,
         now: @escaping () -> Date
     ) {
-        self.loader = loader
+        self.service = service
         self.toggler = toggler
         self.calendar = calendar
         self.now = now
@@ -58,7 +58,7 @@ public final class WeeklyWorkoutsViewModel {
         isLoading = true
         defer { isLoading = false }
         do {
-            show(try await loader.load())
+            show(try await service.loadWeek())
         } catch is CancellationError {
             return
         } catch {

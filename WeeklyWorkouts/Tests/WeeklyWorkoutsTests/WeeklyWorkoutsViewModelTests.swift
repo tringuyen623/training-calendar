@@ -10,10 +10,10 @@ private let thursday = 3
 @MainActor
 struct WeeklyWorkoutsViewModelTests {
     @Test func init_doesNotRequestLoadOrToggle() {
-        let (_, loader, marksStore) = makeSUT()
+        let (_, client, store) = makeSUT()
 
-        #expect(loader.loadCallCount == 0)
-        #expect(marksStore.receivedMessages.isEmpty)
+        #expect(client.requestedURLs.isEmpty)
+        #expect(store.receivedMessages.isEmpty)
     }
 
     @Test func init_showsTheSevenFormattedDaysOfTheCurrentWeekWithNoWorkouts() {
@@ -25,37 +25,37 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func loadWeek_requestsLoadOnce() async {
-        let (sut, loader, _) = makeSUT()
+        let (sut, client, _) = makeSUT()
 
         await sut.send(.loadWeek)
 
-        #expect(loader.loadCallCount == 1)
+        #expect(client.requestedURLs.count == 1)
     }
 
     @Test func loadWeek_showsLoadingWithTheSevenDaysUntilLoadCompletes() async {
-        let (sut, loader, _) = makeSUT()
-        loader.stubPendingLoad()
+        let (sut, client, _) = makeSUT()
+        client.stubPendingRequest()
 
         let loading = Task { await sut.send(.loadWeek) }
-        await loader.waitForPendingLoads()
+        await client.waitForPendingRequest()
 
         #expect(sut.isLoading == true)
         #expect(sut.days == emptyWeekOfWednesday())
 
-        loader.completePendingLoads(with: .success([]))
+        client.completePendingRequests(withStatusCode: 200, data: makeJSON(days: []))
         await loading.value
 
         #expect(sut.isLoading == false)
     }
 
     @Test func loadWeek_placesLoadedWorkoutsIntoTheirDaysOnSuccess() async {
-        let (sut, loader, _) = makeSUT()
+        let (sut, client, store) = makeSUT()
         let mondayWorkout = makeWorkout()
         let fridayWorkout = makeWorkout()
-        loader.stub(.success([
+        stubLoadedWeek([
             makeDay(4, with: fridayWorkout),
             makeDay(0, with: mondayWorkout),
-        ]))
+        ], client: client, store: store)
 
         await sut.send(.loadWeek)
 
@@ -65,8 +65,8 @@ struct WeeklyWorkoutsViewModelTests {
 
     @Test(arguments: zip([1, 5], ["1 exercise", "5 exercises"]))
     func loadWeek_formatsExerciseCount(count: Int, expectedText: String) async {
-        let (sut, loader, _) = makeSUT()
-        loader.stub(.success([makeDay(0, with: makeWorkout(exerciseCount: count))]))
+        let (sut, client, store) = makeSUT()
+        stubLoadedWeek([makeDay(0, with: makeWorkout(exerciseCount: count))], client: client, store: store)
 
         await sut.send(.loadWeek)
 
@@ -80,8 +80,8 @@ struct WeeklyWorkoutsViewModelTests {
         StatusCase(status: .assigned, day: thursday, expectedText: nil, expectedStatus: .upcoming),
     ])
     func loadWeek_formatsScheduledStatus(_ statusCase: StatusCase) async {
-        let (sut, loader, _) = makeSUT()
-        loader.stub(.success([makeDay(statusCase.day, with: makeWorkout(status: statusCase.status))]))
+        let (sut, client, store) = makeSUT()
+        stubLoadedWeek([makeDay(statusCase.day, with: makeWorkout(status: statusCase.status))], client: client, store: store)
 
         await sut.send(.loadWeek)
 
@@ -102,11 +102,11 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func loadWeek_onFailure_showsTheSevenEmptyDaysAndErrorAndStopsLoading() async {
-        let (sut, loader, _) = makeSUT()
-        loader.stub(.success([makeDay(0, with: makeWorkout())]))
+        let (sut, client, store) = makeSUT()
+        stubLoadedWeek([makeDay(0, with: makeWorkout())], client: client, store: store)
         await sut.send(.loadWeek)
 
-        loader.stub(.failure(anyNSError()))
+        stubLoadFailure(with: anyNSError(), client: client, store: store)
         await sut.send(.loadWeek)
 
         #expect(sut.days == emptyWeekOfWednesday())
@@ -115,8 +115,8 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func loadWeek_onCancellation_stopsLoadingWithoutError() async {
-        let (sut, loader, _) = makeSUT()
-        loader.stub(.failure(CancellationError()))
+        let (sut, client, store) = makeSUT()
+        stubLoadFailure(with: CancellationError(), client: client, store: store)
 
         await sut.send(.loadWeek)
 
@@ -125,23 +125,22 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func loadWeek_whileLoading_doesNotRequestAnotherLoad() async {
-        let (sut, loader, _) = makeSUT()
-        loader.stubPendingLoad()
+        let (sut, client, _) = makeSUT()
+        client.stubPendingRequest()
         let loading = Task { await sut.send(.loadWeek) }
-        await loader.waitForPendingLoads()
+        await client.waitForPendingRequest()
 
-        loader.stub(.success([]))
         await sut.send(.loadWeek)
 
-        #expect(loader.loadCallCount == 1)
+        #expect(client.requestedURLs.count == 1)
 
-        loader.completePendingLoads(with: .success([]))
+        client.completePendingRequests(withStatusCode: 200, data: makeJSON(days: []))
         await loading.value
     }
 
     @Test func dismissError_clearsErrorMessage() async {
-        let (sut, loader, _) = makeSUT()
-        loader.stub(.failure(anyNSError()))
+        let (sut, client, store) = makeSUT()
+        stubLoadFailure(with: anyNSError(), client: client, store: store)
         await sut.send(.loadWeek)
 
         await sut.send(.dismissError)
@@ -150,7 +149,7 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func display_placesDeliveredWorkoutsIntoTheDaysWithoutRequestingLoadOrToggle() {
-        let (sut, loader, marksStore) = makeSUT()
+        let (sut, client, store) = makeSUT()
         let workout = makeWorkout(status: .completed)
 
         sut.display([makeDay(tuesday, with: workout)])
@@ -158,34 +157,34 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.days[tuesday].workouts == [
             WorkoutCardViewData(id: workout.id, title: workout.title, statusText: "Completed", exerciseCount: "5 exercises", status: .completed),
         ])
-        #expect(loader.loadCallCount == 0)
-        #expect(marksStore.receivedMessages.isEmpty)
+        #expect(client.requestedURLs.isEmpty)
+        #expect(store.receivedMessages.isEmpty)
     }
 
     @Test(arguments: [true, false])
     func toggle_requestsToggleWithWorkoutsCurrentCompletion(isCompleted: Bool) async {
-        let (sut, _, marksStore) = makeSUT()
+        let (sut, _, store) = makeSUT()
         let workout = makeWorkout(status: isCompleted ? .completed : .assigned)
         sut.display([makeDay(tuesday, with: workout)])
 
         await sut.send(.toggle(workoutID: workout.id))
 
-        #expect(marksStore.receivedMessages == [.insertMark(!isCompleted, workout.id)])
+        #expect(store.receivedMessages == [.insertMark(!isCompleted, workout.id)])
     }
 
     @Test(arguments: zip([Workout.Status.assigned, .completed], [WorkoutCardViewData.Status.completed, .missed]))
     func toggle_showsNewCompletionWhileSaving(status: Workout.Status, expectedStatus: WorkoutCardViewData.Status) async {
-        let (sut, _, marksStore) = makeSUT()
+        let (sut, _, store) = makeSUT()
         let workout = makeWorkout(status: status)
         sut.display([makeDay(tuesday, with: workout)])
-        marksStore.stubPendingMarkInsertion()
+        store.stubPendingMarkInsertion()
 
         let toggling = Task { await sut.send(.toggle(workoutID: workout.id)) }
-        await marksStore.waitForPendingMarkInsertion()
+        await store.waitForPendingMarkInsertion()
 
         #expect(sut.days[tuesday].workouts.map(\.status) == [expectedStatus])
 
-        marksStore.completePendingMarkInsertion(with: .success(()))
+        store.completePendingMarkInsertion(with: .success(()))
         await toggling.value
     }
 
@@ -201,10 +200,10 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func toggle_onFailure_revertsToPreviousCompletionAndShowsError() async {
-        let (sut, _, marksStore) = makeSUT()
+        let (sut, _, store) = makeSUT()
         let workout = makeWorkout(status: .completed)
         sut.display([makeDay(tuesday, with: workout)])
-        marksStore.stubMarkInsertion(with: anyNSError())
+        store.stubMarkInsertion(with: anyNSError())
 
         await sut.send(.toggle(workoutID: workout.id))
 
@@ -221,20 +220,35 @@ struct WeeklyWorkoutsViewModelTests {
         let expectedStatus: WorkoutCardViewData.Status
     }
 
+    /// Loads through a real service: by default the cache is empty and the API delivers an empty week.
     private func makeSUT(
         now: @escaping () -> Date = { wednesdayNoon }
-    ) -> (sut: WeeklyWorkoutsViewModel, loader: WeekLoaderSpy, marksStore: WeeklyWorkoutsStoreSpy) {
-        let loader = WeekLoaderSpy()
-        let marksStore = WeeklyWorkoutsStoreSpy()
+    ) -> (sut: WeeklyWorkoutsViewModel, client: HTTPClientSpy, store: WeeklyWorkoutsStoreSpy) {
+        let client = HTTPClientSpy()
+        let store = WeeklyWorkoutsStoreSpy()
+        client.stub(statusCode: 200, data: makeJSON(days: []))
         var calendar = makeCalendar()
         calendar.locale = Locale(identifier: "en_US_POSIX")
+        let service = WeeklyWorkoutsService(url: URL(string: "https://a-url.com")!, client: client, store: store, calendar: calendar, currentDate: now)
         let sut = WeeklyWorkoutsViewModel(
-            loader: loader,
-            toggler: WorkoutCompletionToggler(marksStore: marksStore),
+            service: service,
+            toggler: WorkoutCompletionToggler(marksStore: store),
             calendar: calendar,
             now: now
         )
-        return (sut, loader, marksStore)
+        return (sut, client, store)
+    }
+
+    /// The week is delivered from the cache right away; its background refresh fails without effect.
+    private func stubLoadedWeek(_ days: [WorkoutDay], client: HTTPClientSpy, store: WeeklyWorkoutsStoreSpy) {
+        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: wednesdayNoon))
+        client.stub(error: anyNSError())
+    }
+
+    /// With nothing cached, the service waits for the API, so its failure reaches the ViewModel.
+    private func stubLoadFailure(with error: Error, client: HTTPClientSpy, store: WeeklyWorkoutsStoreSpy) {
+        store.stubEmptyCache()
+        client.stub(error: error)
     }
 
     private func makeDay(_ day: Int, with workout: Workout) -> WorkoutDay {
@@ -255,44 +269,5 @@ struct WeeklyWorkoutsViewModelTests {
             DayViewData(id: 5, weekday: "Sat", dayNumber: "3", isToday: false, workouts: []),
             DayViewData(id: 6, weekday: "Sun", dayNumber: "4", isToday: false, workouts: []),
         ]
-    }
-}
-
-private final class WeekLoaderSpy: WorkoutsLoader {
-    private(set) var loadCallCount = 0
-    private var result: Result<[WorkoutDay], Error>? = .success([])
-    private var pendingLoads: [CheckedContinuation<[WorkoutDay], Error>] = []
-    private var pendingLoadWaiters: [CheckedContinuation<Void, Never>] = []
-
-    func stub(_ result: Result<[WorkoutDay], Error>) {
-        self.result = result
-    }
-
-    /// Loads stay pending until `completePendingLoads(with:)`.
-    func stubPendingLoad() {
-        result = nil
-    }
-
-    func waitForPendingLoads(count: Int = 1) async {
-        while pendingLoads.count < count {
-            await withCheckedContinuation { pendingLoadWaiters.append($0) }
-        }
-    }
-
-    func completePendingLoads(with result: Result<[WorkoutDay], Error>) {
-        pendingLoads.forEach { $0.resume(with: result) }
-        pendingLoads.removeAll()
-    }
-
-    func load() async throws -> [WorkoutDay] {
-        loadCallCount += 1
-        if let result {
-            return try result.get()
-        }
-        return try await withCheckedThrowingContinuation { continuation in
-            pendingLoads.append(continuation)
-            pendingLoadWaiters.forEach { $0.resume() }
-            pendingLoadWaiters.removeAll()
-        }
     }
 }
