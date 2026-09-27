@@ -18,4 +18,8 @@ public final class LocalWorkoutsLoader: WorkoutsLoader {
         }
         return cache.days
     }
+
+    public func save(_ days: [WorkoutDay]) async throws {
+        try? await store.deleteCachedWorkouts()
+    }
 }
