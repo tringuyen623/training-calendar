@@ -194,6 +194,16 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         #expect(store.receivedMessages == [.retrieve])
     }
 
+    @Test func load_hasNoSideEffectsOnExpiredCache() async {
+        let now = date(2026, 9, 30, 12, 0)
+        let (sut, store) = makeSUT(currentDate: { now })
+        store.stubRetrieval(with: CachedWorkouts(days: uniqueDays(), timestamp: date(2026, 9, 25, 18, 0)))
+
+        _ = try? await sut.load()
+
+        #expect(store.receivedMessages == [.retrieve])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
