@@ -42,6 +42,16 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
     }
 }
 
+extension SwiftDataWorkoutsStore: CompletionMarksStore {
+    public func deleteAllMarks() async throws {}
+
+    public func insertMark(_ isCompleted: Bool, for workoutID: String) async throws {}
+
+    public func retrieveAllMarks() async throws -> [String: Bool] {
+        [:]
+    }
+}
+
 @Model
 private final class ManagedCache {
     var timestamp: Date

@@ -131,6 +131,14 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(try otherModelsCount(in: container) == 1)
     }
 
+    @Test func retrieveAllMarks_deliversNoMarksOnEmptyStore() async throws {
+        let sut = try makeSUT()
+
+        let marks = try await sut.retrieveAllMarks()
+
+        #expect(marks.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
