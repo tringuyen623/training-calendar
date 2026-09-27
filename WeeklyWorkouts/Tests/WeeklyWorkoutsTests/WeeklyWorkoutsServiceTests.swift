@@ -29,6 +29,17 @@ struct WeeklyWorkoutsServiceTests {
         await completePendingRefresh(of: sut, on: client)
     }
 
+    @Test func loadWeek_onCachedWeek_requestsDataFromURLInTheBackground() async {
+        let url = URL(string: "https://a-given-url.com")!
+        let (sut, client, store) = makeSUT(url: url)
+        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
+
+        _ = try? await sut.loadWeek()
+        await sut.refreshTask?.value
+
+        #expect(client.requestedURLs == [url])
+    }
+
     // MARK: - No cached week
 
     @Test func loadWeek_onEmptyCache_requestsDataFromURLOnce() async {
