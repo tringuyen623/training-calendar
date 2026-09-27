@@ -296,10 +296,10 @@ struct WeeklyWorkoutsServiceTests {
         #expect(await sut.needsLoading() == false)
     }
 
-    @Test(arguments: NoCachedWeek.allCases)
-    func needsLoading_withoutCachedWeek_isTrue(_ noCachedWeek: NoCachedWeek) async {
+    @Test(arguments: [CacheState.emptyCache, .cacheFromPreviousWeek])
+    func needsLoading_withoutCachedWeek_isTrue(_ state: CacheState) async {
         let (sut, _, store) = makeSUT()
-        noCachedWeek.stub(on: store)
+        state.stub(on: store)
 
         #expect(await sut.needsLoading() == true)
     }
@@ -309,6 +309,20 @@ struct WeeklyWorkoutsServiceTests {
         store.stubRetrieval(with: anyNSError())
 
         #expect(await sut.needsLoading() == true)
+    }
+
+    @Test(arguments: CacheState.allCases)
+    func needsLoading_onlyReadsTheCache(_ state: CacheState) async {
+        let (sut, client, store) = makeSUT()
+        state.stub(on: store)
+        client.stub(statusCode: 200, data: makeServerWeek().json)
+
+        _ = await sut.needsLoading()
+        await sut.refreshTask?.value
+
+        #expect(store.receivedMessages == [.retrieve])
+        #expect(client.requestedURLs.isEmpty)
+        #expect(sut.refreshTask == nil)
     }
 
     // MARK: - Cache validation
@@ -345,13 +359,19 @@ struct WeeklyWorkoutsServiceTests {
         ]
     }
 
-    enum NoCachedWeek: CaseIterable, Sendable {
+    enum CacheState: CaseIterable, Sendable {
+        case currentWeek
         /// Never loaded, or deleted by the cache validation.
         case emptyCache
         case cacheFromPreviousWeek
+        case unreadable
 
         func stub(on store: WeeklyWorkoutsStoreSpy) {
             switch self {
+            case .currentWeek:
+                store.stubRetrieval(with: CachedWorkouts(days: local(uniqueDays().models), timestamp: date(2026, 9, 28, 0, 0)))
+            case .unreadable:
+                store.stubRetrieval(with: anyNSError())
             case .emptyCache:
                 store.stubEmptyCache()
             case .cacheFromPreviousWeek:
