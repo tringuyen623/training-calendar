@@ -189,6 +189,17 @@ struct WeeklyWorkoutsViewModelTests {
         await toggling.value
     }
 
+    @Test func toggle_keepsNewCompletionWithoutErrorOnSuccess() async {
+        let (sut, _, _) = makeSUT()
+        let workout = makeWorkout(status: .assigned)
+        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+
+        await sut.send(.toggle(workoutID: workout.id))
+
+        #expect(sut.days[tuesday].workouts.map(\.status) == [.completed])
+        #expect(sut.errorMessage == nil)
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {
