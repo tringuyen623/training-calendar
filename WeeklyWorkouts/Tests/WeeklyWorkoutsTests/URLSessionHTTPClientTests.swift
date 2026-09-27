@@ -46,6 +46,17 @@ struct URLSessionHTTPClientTests {
         }
     }
 
+    @Test func get_failsOnNonHTTPURLResponse() async {
+        let url = URL(string: "https://any-url.com")!
+        let sut = makeSUT()
+        let nonHTTPResponse = URLResponse(url: url, mimeType: nil, expectedContentLength: 0, textEncodingName: nil)
+        URLProtocolStub.stub(data: anyData(), response: nonHTTPResponse)
+
+        await #expect(throws: (any Error).self) {
+            try await sut.get(from: url)
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(configuration: URLSessionConfiguration = .ephemeral) -> URLSessionHTTPClient {
@@ -56,6 +67,10 @@ struct URLSessionHTTPClientTests {
 
     private func anyNSError() -> NSError {
         NSError(domain: "any error", code: 0)
+    }
+
+    private func anyData() -> Data {
+        Data("any data".utf8)
     }
 
     private final class URLProtocolStub: URLProtocol {
@@ -78,6 +93,10 @@ struct URLSessionHTTPClientTests {
 
         static func stub(error: Error) {
             state.withLock { $0.stub = Stub(data: nil, response: nil, error: error) }
+        }
+
+        static func stub(data: Data, response: URLResponse) {
+            state.withLock { $0.stub = Stub(data: data, response: response, error: nil) }
         }
 
         static func reset() {
