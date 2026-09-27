@@ -28,7 +28,12 @@ public final class LocalWorkoutsLoader: WorkoutsLoader {
 
     public func validateCache() async throws {
         do {
-            _ = try await store.retrieve()
+            guard let cache = try await store.retrieve(),
+                  !WorkoutsCachePolicy.validate(cache.timestamp, against: currentDate(), in: calendar) else {
+                return
+            }
+            try await marksStore.deleteAllMarks()
+            try await store.deleteCachedWorkouts()
         } catch {
             try await store.deleteCachedWorkouts()
         }

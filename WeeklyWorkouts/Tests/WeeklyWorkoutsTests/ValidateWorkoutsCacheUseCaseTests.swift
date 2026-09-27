@@ -34,6 +34,17 @@ struct ValidateWorkoutsCacheUseCaseTests {
         #expect(marksStore.receivedMessages.isEmpty)
     }
 
+    @Test func validateCache_deletesCacheAndCompletionMarksOnExpiredCache() async throws {
+        let now = date(2026, 9, 30, 12, 0)
+        let (sut, store, marksStore) = makeSUT(currentDate: { now })
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
+
+        try await sut.validateCache()
+
+        #expect(store.receivedMessages == [.retrieve, .deleteCachedWorkouts])
+        #expect(marksStore.receivedMessages == [.deleteAllMarks])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
