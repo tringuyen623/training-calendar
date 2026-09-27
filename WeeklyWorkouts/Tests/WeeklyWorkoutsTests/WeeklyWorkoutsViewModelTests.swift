@@ -200,6 +200,18 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.errorMessage == nil)
     }
 
+    @Test func toggle_onFailure_revertsToPreviousCompletionAndShowsError() async {
+        let (sut, _, toggler) = makeSUT()
+        let workout = makeWorkout(status: .completed)
+        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+        toggler.stubToggle(with: anyNSError())
+
+        await sut.send(.toggle(workoutID: workout.id))
+
+        #expect(sut.days[tuesday].workouts.map(\.status) == [.completed])
+        #expect(sut.errorMessage == "Couldn't save your change")
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {
@@ -290,9 +302,14 @@ private final class CompletionTogglerSpy {
     }
 
     private(set) var receivedToggles: [Toggle] = []
+    private var error: Error?
     private var isPending = false
     private var pendingToggle: CheckedContinuation<Bool, Error>?
     private var pendingToggleWaiters: [CheckedContinuation<Void, Never>] = []
+
+    func stubToggle(with error: Error) {
+        self.error = error
+    }
 
     /// Toggles stay pending until `completePendingToggle(with:)`.
     func stubPendingToggle() {
@@ -312,6 +329,9 @@ private final class CompletionTogglerSpy {
 
     func toggle(workoutID: String, isCompleted: Bool) async throws -> Bool {
         receivedToggles.append(Toggle(workoutID: workoutID, isCompleted: isCompleted))
+        if let error {
+            throw error
+        }
         guard isPending else {
             return !isCompleted
         }

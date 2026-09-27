@@ -68,7 +68,12 @@ public final class WeeklyWorkoutsViewModel {
         guard let workout = workoutDays.lazy.flatMap(\.workouts).first(where: { $0.id == workoutID }) else { return }
         let isCompleted = workout.status == .completed
         show(settingCompletion(!isCompleted, ofWorkout: workoutID, in: workoutDays))
-        _ = try? await toggleCompletion(workoutID, isCompleted)
+        do {
+            _ = try await toggleCompletion(workoutID, isCompleted)
+        } catch {
+            show(settingCompletion(isCompleted, ofWorkout: workoutID, in: workoutDays))
+            errorMessage = "Couldn't save your change"
+        }
     }
 
     // Mirrors a completion mark: completed, or not completed so that the week rules derive missed, assigned or upcoming.
