@@ -84,6 +84,20 @@ struct ValidateWorkoutsCacheUseCaseTests {
         #expect(marksStore.receivedMessages == [.deleteAllMarks])
     }
 
+    @Test func validateCache_failsOnCachedWorkoutsDeletionErrorOnExpiredCache() async {
+        let now = date(2026, 9, 30, 12, 0)
+        let (sut, store, _) = makeSUT(currentDate: { now })
+        let deletionError = NSError(domain: "deletion error", code: 0)
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
+        store.stubDeletion(with: deletionError)
+
+        await #expect {
+            try await sut.validateCache()
+        } throws: { error in
+            error as NSError == deletionError
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
