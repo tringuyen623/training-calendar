@@ -23,6 +23,17 @@ struct CacheWorkoutsUseCaseTests {
         #expect(store.receivedMessages == [.deleteCachedWorkouts, .insert(days, now)])
     }
 
+    @Test func save_hasNoSideEffectsBeyondDeletionAndInsertionOnInsertionError() async {
+        let now = Date(timeIntervalSince1970: 1_000)
+        let (sut, store) = makeSUT(currentDate: { now })
+        let days = uniqueDays()
+        store.stubInsertion(with: anyNSError())
+
+        try? await sut.save(days)
+
+        #expect(store.receivedMessages == [.deleteCachedWorkouts, .insert(days, now)])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
