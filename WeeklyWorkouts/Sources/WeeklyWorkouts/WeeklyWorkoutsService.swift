@@ -23,7 +23,8 @@ public final class WeeklyWorkoutsService {
     }
 
     public func loadWeek() async throws -> [WorkoutDay] {
-        let cached = try await local.load()
+        // An unreadable cache counts as no cached week: the API load replaces it, and its failure reaches the caller.
+        let cached = (try? await local.load()) ?? []
         guard cached.isEmpty else {
             let week = try await applyingMarks(to: cached)
             // A failed refresh keeps the cached week on screen without an error; a successful one

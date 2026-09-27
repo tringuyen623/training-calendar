@@ -198,6 +198,20 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.insertedCaches == [CachedWorkouts(days: serverWeek.days, timestamp: now)])
     }
 
+    // MARK: - Unreadable cache
+
+    @Test func loadWeek_onCacheRetrievalError_deliversServerWeekAndReplacesCache() async throws {
+        let (sut, client, store) = makeSUT()
+        let serverWeek = makeServerWeek()
+        store.stubRetrieval(with: anyNSError())
+        client.stub(statusCode: 200, data: serverWeek.json)
+
+        let days = try await sut.loadWeek()
+
+        #expect(days == serverWeek.days)
+        #expect(store.insertedCaches == [CachedWorkouts(days: serverWeek.days, timestamp: now)])
+    }
+
     // MARK: - Cached week reloaded after a store change
 
     @Test func loadCachedWeek_completesNotCompletedWorkoutWithCompletedMark() async throws {
