@@ -1,6 +1,6 @@
 import Foundation
 
-public final class RemoteWorkoutsLoader {
+public final class RemoteWorkoutsLoader: WorkoutsLoader {
     private let url: URL
     private let client: HTTPClient
 
