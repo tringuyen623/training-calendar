@@ -287,6 +287,44 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.writes.isEmpty)
     }
 
+    // MARK: - Needs loading
+
+    @Test func needsLoading_onCachedWeek_isFalse() async {
+        let (sut, _, store) = makeSUT()
+        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
+
+        #expect(await sut.needsLoading() == false)
+    }
+
+    @Test(arguments: [CacheState.emptyCache, .cacheFromPreviousWeek])
+    func needsLoading_withoutCachedWeek_isTrue(_ state: CacheState) async {
+        let (sut, _, store) = makeSUT()
+        state.stub(on: store)
+
+        #expect(await sut.needsLoading() == true)
+    }
+
+    @Test func needsLoading_onCacheRetrievalError_isTrue() async {
+        let (sut, _, store) = makeSUT()
+        store.stubRetrieval(with: anyNSError())
+
+        #expect(await sut.needsLoading() == true)
+    }
+
+    @Test(arguments: CacheState.allCases)
+    func needsLoading_onlyReadsTheCache(_ state: CacheState) async {
+        let (sut, client, store) = makeSUT()
+        state.stub(on: store)
+        client.stub(statusCode: 200, data: makeServerWeek().json)
+
+        _ = await sut.needsLoading()
+        await sut.refreshTask?.value
+
+        #expect(store.receivedMessages == [.retrieve])
+        #expect(client.requestedURLs.isEmpty)
+        #expect(sut.refreshTask == nil)
+    }
+
     // MARK: - Cache validation
 
     @Test func validateCache_deletesMarksThenCachedWorkoutsOnExpiredCache() async throws {
@@ -319,6 +357,27 @@ struct WeeklyWorkoutsServiceTests {
             WorkoutDay(id: "monday-id", day: 0, workouts: workouts),
             WorkoutDay(id: "friday-id", day: 4, workouts: []),
         ]
+    }
+
+    enum CacheState: CaseIterable, Sendable {
+        case currentWeek
+        /// Never loaded, or deleted by the cache validation.
+        case emptyCache
+        case cacheFromPreviousWeek
+        case unreadable
+
+        func stub(on store: WeeklyWorkoutsStoreSpy) {
+            switch self {
+            case .currentWeek:
+                store.stubRetrieval(with: CachedWorkouts(days: local(uniqueDays().models), timestamp: date(2026, 9, 28, 0, 0)))
+            case .unreadable:
+                store.stubRetrieval(with: anyNSError())
+            case .emptyCache:
+                store.stubEmptyCache()
+            case .cacheFromPreviousWeek:
+                store.stubRetrieval(with: CachedWorkouts(days: local(uniqueDays().models), timestamp: date(2026, 9, 27, 23, 59)))
+            }
+        }
     }
 
     enum APIFailure: CaseIterable, Sendable {
