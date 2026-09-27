@@ -45,6 +45,21 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.isLoading == false)
     }
 
+    @Test func loadWeek_placesLoadedWorkoutsIntoTheirDaysOnSuccess() async {
+        let (sut, loader, _) = makeSUT()
+        let mondayWorkout = makeWorkout()
+        let fridayWorkout = makeWorkout()
+        loader.stub(.success([
+            WorkoutDay(id: UUID().uuidString, day: 4, workouts: [fridayWorkout]),
+            WorkoutDay(id: UUID().uuidString, day: 0, workouts: [mondayWorkout]),
+        ]))
+
+        await sut.send(.loadWeek)
+
+        #expect(sut.days.map { $0.workouts.map(\.id) } == [[mondayWorkout.id], [], [], [], [fridayWorkout.id], [], []])
+        #expect(sut.days.flatMap(\.workouts).map(\.title) == [mondayWorkout.title, fridayWorkout.title])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
@@ -61,6 +76,10 @@ struct WeeklyWorkoutsViewModelTests {
             now: now
         )
         return (sut, loader, toggler)
+    }
+
+    private func makeWorkout(status: Workout.Status = .assigned, exerciseCount: Int = 5) -> Workout {
+        Workout(id: UUID().uuidString, title: "title \(UUID().uuidString)", status: status, exerciseCount: exerciseCount)
     }
 
     private func emptyWeekOfWednesday() -> [DayViewData] {
@@ -82,6 +101,10 @@ private final class WeekLoaderSpy {
     private var result: Result<[WorkoutDay], Error>? = .success([])
     private var pendingLoads: [CheckedContinuation<[WorkoutDay], Error>] = []
     private var pendingLoadWaiters: [CheckedContinuation<Void, Never>] = []
+
+    func stub(_ result: Result<[WorkoutDay], Error>) {
+        self.result = result
+    }
 
     /// Loads stay pending until `completePendingLoads(with:)`.
     func stubPendingLoad() {

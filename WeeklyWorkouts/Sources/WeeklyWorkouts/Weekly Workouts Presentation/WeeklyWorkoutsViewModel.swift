@@ -34,7 +34,9 @@ public final class WeeklyWorkoutsViewModel {
         switch action {
         case .loadWeek:
             isLoading = true
-            _ = try? await loadWeek()
+            if let workoutDays = try? await loadWeek() {
+                show(workoutDays)
+            }
             isLoading = false
         }
     }
@@ -51,7 +53,11 @@ public final class WeeklyWorkoutsViewModel {
             weekday: calendar.shortWeekdaySymbols[calendar.component(.weekday, from: day.date) - 1],
             dayNumber: String(calendar.component(.day, from: day.date)),
             isToday: day.isToday,
-            workouts: []
+            workouts: day.workouts.map(cardViewData)
         )
+    }
+
+    private func cardViewData(for workout: ScheduledWorkout) -> WorkoutCardViewData {
+        WorkoutCardViewData(id: workout.id, title: workout.title, statusText: nil, exerciseCount: "", status: .assigned)
     }
 }
