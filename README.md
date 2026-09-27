@@ -414,6 +414,16 @@ graph TD
     Service --> Store
     URLSession -. conforms to .-> Client
     SwiftData -. conforms to .-> Store
+
+    style App fill:#E5E7EB,stroke:#6B7280,color:#111827
+    style UIModule fill:#EDE9FE,stroke:#7C3AED,color:#111827
+    style Package fill:#FFFFFF,stroke:#374151,color:#111827
+    style Presentation fill:#DBEAFE,stroke:#2563EB,color:#111827
+    style Feature fill:#DCFCE7,stroke:#16A34A,color:#111827
+    style API fill:#FFEDD5,stroke:#EA580C,color:#111827
+    style Cache fill:#FEF9C3,stroke:#CA8A04,color:#111827
+    style APIInfra fill:#F3F4F6,stroke:#9CA3AF,stroke-dasharray:4 3,color:#111827
+    style CacheInfra fill:#F3F4F6,stroke:#9CA3AF,stroke-dasharray:4 3,color:#111827
 ```
 
 Solid arrows mean "depends on"; dotted arrows mean "conforms to". The whole app target is the composition root: it depends on both modules, creates the concrete types and wires them together. Inside the `WeeklyWorkouts` package, the service only knows the protocols of the API and the cache; each concrete adapter lives in its capability's `Infrastructure` folder. The views only read display data.
