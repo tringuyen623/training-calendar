@@ -28,6 +28,18 @@ struct ToggleWorkoutCompletionUseCaseTests {
         #expect(newCompletion == !isCompleted)
     }
 
+    @Test func toggle_failsOnInsertionError() async {
+        let (sut, marksStore) = makeSUT()
+        let insertionError = anyNSError()
+        marksStore.stubInsertion(with: insertionError)
+
+        await #expect {
+            try await sut.toggle(workoutID: UUID().uuidString, isCompleted: false)
+        } throws: { error in
+            error as NSError == insertionError
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> (sut: WorkoutCompletionToggler, marksStore: CompletionMarksStoreSpy) {
