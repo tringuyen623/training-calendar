@@ -79,6 +79,17 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         #expect(receivedDays == days)
     }
 
+    @Test func load_deliversCachedWorkoutsOnSundayForCacheSavedOnMondayOfSameWeek() async throws {
+        let now = date(2026, 10, 4, 23, 59, 59)
+        let (sut, store) = makeSUT(currentDate: { now })
+        let days = uniqueDays()
+        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 9, 28, 0, 0, 0)))
+
+        let receivedDays = try await sut.load()
+
+        #expect(receivedDays == days)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
