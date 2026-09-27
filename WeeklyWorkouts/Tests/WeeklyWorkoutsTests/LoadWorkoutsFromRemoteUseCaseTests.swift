@@ -40,7 +40,7 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
     @Test(arguments: [199, 201, 300, 400, 500])
     func load_deliversInvalidDataErrorOnNon200HTTPResponse(statusCode: Int) async {
         let (sut, client) = makeSUT()
-        client.result = .success((makeJSON(days: []), HTTPURLResponse(statusCode: statusCode)))
+        client.complete(withStatusCode: statusCode, data: makeJSON(days: []))
 
         await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
             try await sut.load()
@@ -49,7 +49,7 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
 
     @Test func load_deliversInvalidDataErrorOn200HTTPResponseWithInvalidJSON() async {
         let (sut, client) = makeSUT()
-        client.result = .success((Data("invalid json".utf8), HTTPURLResponse(statusCode: 200)))
+        client.complete(withStatusCode: 200, data: Data("invalid json".utf8))
 
         await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
             try await sut.load()
@@ -61,7 +61,7 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         let (sut, client) = makeSUT()
         var day = makeDayJSON(workouts: [makeWorkoutJSON()])
         day[field] = nil
-        client.result = .success((makeJSON(days: [day]), HTTPURLResponse(statusCode: 200)))
+        client.complete(withStatusCode: 200, data: makeJSON(days: [day]))
 
         await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
             try await sut.load()
@@ -73,7 +73,7 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         let (sut, client) = makeSUT()
         var workout = makeWorkoutJSON()
         workout[field] = nil
-        client.result = .success((makeJSON(days: [makeDayJSON(workouts: [workout])]), HTTPURLResponse(statusCode: 200)))
+        client.complete(withStatusCode: 200, data: makeJSON(days: [makeDayJSON(workouts: [workout])]))
 
         await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
             try await sut.load()
@@ -84,7 +84,7 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
     func load_deliversInvalidDataErrorOn200HTTPResponseWithUnknownStatus(status: Int) async {
         let (sut, client) = makeSUT()
         let day = makeDayJSON(workouts: [makeWorkoutJSON(status: status)])
-        client.result = .success((makeJSON(days: [day]), HTTPURLResponse(statusCode: 200)))
+        client.complete(withStatusCode: 200, data: makeJSON(days: [day]))
 
         await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
             try await sut.load()
@@ -94,7 +94,7 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
     @Test(arguments: [-1, 7])
     func load_deliversInvalidDataErrorOn200HTTPResponseWithDayOutOfRange(day: Int) async {
         let (sut, client) = makeSUT()
-        client.result = .success((makeJSON(days: [makeDayJSON(day: day)]), HTTPURLResponse(statusCode: 200)))
+        client.complete(withStatusCode: 200, data: makeJSON(days: [makeDayJSON(day: day)]))
 
         await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
             try await sut.load()
@@ -103,7 +103,7 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
 
     @Test func load_deliversNoDaysOn200HTTPResponseWithEmptyJSONList() async throws {
         let (sut, client) = makeSUT()
-        client.result = .success((makeJSON(days: []), HTTPURLResponse(statusCode: 200)))
+        client.complete(withStatusCode: 200, data: makeJSON(days: []))
 
         let days = try await sut.load()
 
@@ -122,7 +122,7 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
             ]),
             makeDayJSON(id: "day-5", day: 5, workouts: []),
         ])
-        client.result = .success((json, HTTPURLResponse(statusCode: 200)))
+        client.complete(withStatusCode: 200, data: json)
 
         let days = try await sut.load()
 
@@ -165,6 +165,10 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
     private final class HTTPClientSpy: HTTPClient {
         private(set) var requestedURLs: [URL] = []
         var result: Result<(Data, HTTPURLResponse), Error> = .failure(NSError(domain: "not stubbed", code: 0))
+
+        func complete(withStatusCode code: Int, data: Data) {
+            result = .success((data, HTTPURLResponse(statusCode: code)))
+        }
 
         func get(from url: URL) async throws -> (Data, HTTPURLResponse) {
             requestedURLs.append(url)
