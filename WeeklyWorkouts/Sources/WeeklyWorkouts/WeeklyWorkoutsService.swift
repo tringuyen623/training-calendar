@@ -24,7 +24,8 @@ public final class WeeklyWorkoutsService {
     public func loadWeek() async throws -> [WorkoutDay] {
         let (data, response) = try await fetch()
         let days = try map(data, from: response)
-        try await local.save(days)
+        // The loaded week is still delivered when saving fails: the next load saves it again.
+        try? await local.save(days)
         return days
     }
 

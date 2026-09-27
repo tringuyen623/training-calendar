@@ -72,6 +72,17 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.writes.isEmpty)
     }
 
+    @Test func loadWeek_onEmptyCache_deliversServerWeekOnSaveFailure() async throws {
+        let (sut, client, store) = makeSUT()
+        let serverWeek = makeServerWeek()
+        client.stub(statusCode: 200, data: serverWeek.json)
+        store.stubInsertion(with: anyNSError())
+
+        let days = try await sut.loadWeek()
+
+        #expect(days == serverWeek.days)
+    }
+
     // MARK: - Helpers
 
     enum APIFailure: CaseIterable, Sendable {
