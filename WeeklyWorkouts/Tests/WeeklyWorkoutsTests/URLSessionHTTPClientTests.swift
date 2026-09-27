@@ -27,7 +27,7 @@ struct URLSessionHTTPClientTests {
         let sut = makeSUT(configuration: configuration)
         URLProtocolStub.stub(error: anyNSError())
 
-        _ = try? await sut.get(from: URL(string: "https://any-url.com")!)
+        _ = try? await sut.get(from: anyURL())
 
         #expect(URLProtocolStub.observedRequests.map(\.cachePolicy) == [.useProtocolCachePolicy])
     }
@@ -38,7 +38,7 @@ struct URLSessionHTTPClientTests {
         URLProtocolStub.stub(error: requestError)
 
         do {
-            _ = try await sut.get(from: URL(string: "https://any-url.com")!)
+            _ = try await sut.get(from: anyURL())
             Issue.record("Expected an error, got a result instead")
         } catch let error as NSError {
             #expect(error.domain == requestError.domain)
@@ -47,7 +47,7 @@ struct URLSessionHTTPClientTests {
     }
 
     @Test func get_failsOnNonHTTPURLResponse() async {
-        let url = URL(string: "https://any-url.com")!
+        let url = anyURL()
         let sut = makeSUT()
         let nonHTTPResponse = URLResponse(url: url, mimeType: nil, expectedContentLength: 0, textEncodingName: nil)
         URLProtocolStub.stub(data: anyData(), response: nonHTTPResponse)
@@ -58,7 +58,7 @@ struct URLSessionHTTPClientTests {
     }
 
     @Test func get_deliversDataAndResponseOnHTTPURLResponseWithData() async throws {
-        let url = URL(string: "https://any-url.com")!
+        let url = anyURL()
         let data = anyData()
         let sut = makeSUT()
         URLProtocolStub.stub(data: data, response: HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
@@ -71,7 +71,7 @@ struct URLSessionHTTPClientTests {
     }
 
     @Test func get_deliversEmptyDataAndResponseOnHTTPURLResponseWithNoData() async throws {
-        let url = URL(string: "https://any-url.com")!
+        let url = anyURL()
         let sut = makeSUT()
         URLProtocolStub.stub(data: nil, response: HTTPURLResponse(url: url, statusCode: 204, httpVersion: nil, headerFields: nil)!)
 
@@ -87,7 +87,7 @@ struct URLSessionHTTPClientTests {
         let (loadingStarted, loadingStartedContinuation) = AsyncStream.makeStream(of: Void.self)
         URLProtocolStub.stubNeverCompleting { loadingStartedContinuation.yield() }
 
-        let task = Task { try await sut.get(from: URL(string: "https://any-url.com")!) }
+        let task = Task { try await sut.get(from: anyURL()) }
         for await _ in loadingStarted { break }
         task.cancel()
 
@@ -102,6 +102,10 @@ struct URLSessionHTTPClientTests {
         configuration.protocolClasses = [URLProtocolStub.self]
         let session = URLSession(configuration: configuration)
         return URLSessionHTTPClient(session: session)
+    }
+
+    private func anyURL() -> URL {
+        URL(string: "https://any-url.com")!
     }
 
     private func anyNSError() -> NSError {
