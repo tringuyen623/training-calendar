@@ -15,15 +15,21 @@ public final class RemoteWorkoutsLoader: WorkoutsLoader {
     }
 
     public func load() async throws -> [WorkoutDay] {
-        let (data, response): (Data, HTTPURLResponse)
+        let (data, response) = try await fetch()
+        return try map(data, from: response)
+    }
+
+    private func fetch() async throws -> (Data, HTTPURLResponse) {
         do {
-            (data, response) = try await client.get(from: url)
+            return try await client.get(from: url)
         } catch let cancellation as CancellationError {
             throw cancellation
         } catch {
             throw Error.requestFailure
         }
+    }
 
+    private func map(_ data: Data, from response: HTTPURLResponse) throws -> [WorkoutDay] {
         do {
             return try WorkoutDaysMapper.map(data, from: response)
         } catch {
