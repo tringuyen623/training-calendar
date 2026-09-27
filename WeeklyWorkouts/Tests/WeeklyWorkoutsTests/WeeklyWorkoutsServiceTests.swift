@@ -24,6 +24,15 @@ struct WeeklyWorkoutsServiceTests {
         #expect(client.requestedURLs == [url])
     }
 
+    @Test func loadWeek_onEmptyCache_deliversRequestFailureOnClientError() async {
+        let (sut, client, _) = makeSUT()
+        client.stub(error: anyNSError())
+
+        await #expect(throws: WeeklyWorkoutsService.Error.requestFailure) {
+            try await sut.loadWeek()
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
