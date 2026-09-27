@@ -36,6 +36,7 @@ public final class WeeklyWorkoutsViewModel {
             isLoading = true
             do {
                 show(try await loadWeek())
+            } catch is CancellationError {
             } catch {
                 show([])
                 errorMessage = "Couldn't load workouts"

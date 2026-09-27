@@ -114,6 +114,16 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.isLoading == false)
     }
 
+    @Test func loadWeek_onCancellation_stopsLoadingWithoutError() async {
+        let (sut, loader, _) = makeSUT()
+        loader.stub(.failure(CancellationError()))
+
+        await sut.send(.loadWeek)
+
+        #expect(sut.errorMessage == nil)
+        #expect(sut.isLoading == false)
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {
