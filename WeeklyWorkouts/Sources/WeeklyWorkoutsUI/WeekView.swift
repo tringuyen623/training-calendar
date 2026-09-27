@@ -2,7 +2,7 @@ import SwiftUI
 import WeeklyWorkouts
 
 /// The week, Monday to Sunday: one row per day with a separator below it.
-/// While loading, each day shows a placeholder card; an error message shows a system alert over the days.
+/// While loading, each day shows a placeholder card; an error message shows a system alert, titled by the message, over the days.
 public struct WeekView: View {
     private let days: [DayViewData]
     private let isLoading: Bool
@@ -29,10 +29,8 @@ public struct WeekView: View {
             DayRowsView(days: days, isLoading: isLoading, onToggle: onToggle)
         }
         .background(Palette.background.ignoresSafeArea())
-        .alert("Couldn't load workouts", isPresented: isShowingError, presenting: errorMessage) { _ in
+        .alert(errorMessage ?? "", isPresented: isShowingError) {
             Button("OK", action: onDismissError)
-        } message: { message in
-            Text(message)
         }
     }
 
@@ -68,7 +66,7 @@ struct DayRowsView: View {
     WeekView(
         days: PreviewData.emptyWeek,
         isLoading: false,
-        errorMessage: "Check your connection and try again.",
+        errorMessage: "Couldn't load workouts",
         onToggle: { _ in },
         onDismissError: {}
     )

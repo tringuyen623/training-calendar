@@ -316,7 +316,7 @@ The brief and the mock API leave a few points open. These are the decisions take
 | 13 | Which persistence layer? | The brief allows any persistence layer | SwiftData, as an implementation detail behind the cache store protocol. The store notifies when the cached data changes; how it detects that is up to the implementation, and the use cases don't depend on it |
 | 14 | What does loading look like? | The loading frame shows the 7 dates with empty rows; the brief asks for "an empty/loading state" | Each day shows its date and a shimmering placeholder card, so it's clear data is on its way. This is a deliberate difference from the loading frame |
 | 15 | How is a single exercise written? | The design only shows plural counts | "1 exercise", otherwise "N exercises" |
-| 16 | What does the error state look like? | Not in the design | A system alert when loading fails; the week stays on screen behind it |
+| 16 | What does the error state look like? | Not in the design | A system alert when loading or saving a change fails; the week stays on screen behind it |
 | 17 | Should validation delete a cache it can't read? | Not specified | No. A read can fail temporarily, and deleting would lose a good cache; a truly corrupt cache is replaced by the next successful remote load |
 
 ## Architecture
