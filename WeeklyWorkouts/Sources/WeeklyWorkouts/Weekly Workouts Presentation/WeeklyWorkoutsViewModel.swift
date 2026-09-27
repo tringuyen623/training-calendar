@@ -61,10 +61,27 @@ public final class WeeklyWorkoutsViewModel {
         WorkoutCardViewData(
             id: workout.id,
             title: workout.title,
-            statusText: nil,
+            statusText: statusText(workout.status),
             exerciseCount: exerciseCountText(workout.exerciseCount),
-            status: .assigned
+            status: cardStatus(workout.status)
         )
+    }
+
+    private func statusText(_ status: ScheduledWorkout.Status) -> String? {
+        switch status {
+        case .missed: "Missed"
+        case .completed: "Completed"
+        case .assigned, .upcoming: nil
+        }
+    }
+
+    private func cardStatus(_ status: ScheduledWorkout.Status) -> WorkoutCardViewData.Status {
+        switch status {
+        case .missed: .missed
+        case .assigned: .assigned
+        case .completed: .completed
+        case .upcoming: .upcoming
+        }
     }
 
     private func exerciseCountText(_ count: Int) -> String {

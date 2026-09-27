@@ -3,6 +3,9 @@ import Testing
 import WeeklyWorkouts
 
 private let wednesdayNoon = date(2026, 9, 30, 12, 0)
+private let tuesday = 1
+private let wednesday = 2
+private let thursday = 3
 
 @MainActor
 struct WeeklyWorkoutsViewModelTests {
@@ -70,7 +73,31 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.days[0].workouts.map(\.exerciseCount) == [expectedText])
     }
 
+    @Test(arguments: [
+        StatusCase(status: .completed, day: tuesday, expectedText: "Completed", expectedStatus: .completed),
+        StatusCase(status: .assigned, day: tuesday, expectedText: "Missed", expectedStatus: .missed),
+        StatusCase(status: .assigned, day: wednesday, expectedText: nil, expectedStatus: .assigned),
+        StatusCase(status: .assigned, day: thursday, expectedText: nil, expectedStatus: .upcoming),
+    ])
+    func loadWeek_formatsScheduledStatus(_ statusCase: StatusCase) async {
+        let (sut, loader, _) = makeSUT()
+        loader.stub(.success([WorkoutDay(id: UUID().uuidString, day: statusCase.day, workouts: [makeWorkout(status: statusCase.status)])]))
+
+        await sut.send(.loadWeek)
+
+        let card = sut.days[statusCase.day].workouts.first
+        #expect(card?.statusText == statusCase.expectedText)
+        #expect(card?.status == statusCase.expectedStatus)
+    }
+
     // MARK: - Helpers
+
+    struct StatusCase: Sendable {
+        let status: Workout.Status
+        let day: Int
+        let expectedText: String?
+        let expectedStatus: WorkoutCardViewData.Status
+    }
 
     private func makeSUT(
         now: @escaping () -> Date = { wednesdayNoon }
