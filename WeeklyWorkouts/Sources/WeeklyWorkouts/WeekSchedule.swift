@@ -24,7 +24,12 @@ public enum WeekSchedule {
     public static func days(for days: [WorkoutDay], now: Date, calendar: Calendar) -> [ScheduledDay] {
         let monday = MondayFirstWeek.start(of: now, in: calendar)
         return (0..<7).map { index in
-            ScheduledDay(date: calendar.date(byAdding: .day, value: index, to: monday)!, isToday: false, workouts: [])
+            let workouts = days.first { $0.day == index }?.workouts ?? []
+            return ScheduledDay(
+                date: calendar.date(byAdding: .day, value: index, to: monday)!,
+                isToday: false,
+                workouts: workouts.map { ScheduledWorkout(id: $0.id, title: $0.title, exerciseCount: $0.exerciseCount, status: .assigned) }
+            )
         }
     }
 }

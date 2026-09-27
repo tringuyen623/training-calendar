@@ -15,4 +15,25 @@ struct WeekScheduleTests {
         ])
         #expect(days.allSatisfy { $0.workouts.isEmpty })
     }
+
+    @Test func days_placesEachServerDayOnItsDateInTheWeek() {
+        let mondayWorkouts = [makeWorkout(), makeWorkout()]
+        let fridayWorkouts = [makeWorkout()]
+        let serverDays = [
+            WorkoutDay(id: UUID().uuidString, day: 4, workouts: fridayWorkouts),
+            WorkoutDay(id: UUID().uuidString, day: 0, workouts: mondayWorkouts),
+        ]
+
+        let days = WeekSchedule.days(for: serverDays, now: date(2026, 9, 30, 12, 0), calendar: makeCalendar())
+
+        #expect(days.map { $0.workouts.map(\.id) } == [mondayWorkouts.map(\.id), [], [], [], fridayWorkouts.map(\.id), [], []])
+        #expect(days.flatMap(\.workouts).map(\.title) == (mondayWorkouts + fridayWorkouts).map(\.title))
+        #expect(days.flatMap(\.workouts).map(\.exerciseCount) == (mondayWorkouts + fridayWorkouts).map(\.exerciseCount))
+    }
+
+    // MARK: - Helpers
+
+    private func makeWorkout(status: Workout.Status = .assigned) -> Workout {
+        Workout(id: UUID().uuidString, title: "title \(UUID().uuidString)", status: status, exerciseCount: Int.random(in: 1...20))
+    }
 }
