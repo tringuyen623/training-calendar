@@ -8,7 +8,7 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
     private var changeObservers: [UUID: AsyncStream<Void>.Continuation] = [:]
 
     public func retrieve() async throws -> CachedWorkouts? {
-        try modelContext.fetch(FetchDescriptor<ManagedCache>()).first.map { try $0.toModel() }
+        try modelContext.fetch(FetchDescriptor<ManagedCache>()).first.map { try $0.toLocal() }
     }
 
     public func deleteCachedWorkouts() async throws {
@@ -18,7 +18,7 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
         notifyChange()
     }
 
-    public func insert(_ days: [WorkoutDay], timestamp: Date) async throws {
+    public func insert(_ days: [LocalWorkoutDay], timestamp: Date) async throws {
         try saveOrRollback {
             try deleteCache()
             modelContext.insert(ManagedCache(timestamp: timestamp, days: days.enumerated().map(ManagedDay.init)))
@@ -108,8 +108,8 @@ private final class ManagedCache {
         self.days = days
     }
 
-    func toModel() throws -> CachedWorkouts {
-        CachedWorkouts(days: try days.sorted { $0.position < $1.position }.map { try $0.toModel() }, timestamp: timestamp)
+    func toLocal() throws -> CachedWorkouts {
+        CachedWorkouts(days: try days.sorted { $0.position < $1.position }.map { try $0.toLocal() }, timestamp: timestamp)
     }
 }
 
@@ -120,15 +120,15 @@ private final class ManagedDay {
     var day: Int
     @Relationship(deleteRule: .cascade) var workouts: [ManagedWorkout]
 
-    init(position: Int, day: WorkoutDay) {
+    init(position: Int, day: LocalWorkoutDay) {
         self.position = position
         self.id = day.id
         self.day = day.day
         self.workouts = day.workouts.enumerated().map(ManagedWorkout.init)
     }
 
-    func toModel() throws -> WorkoutDay {
-        WorkoutDay(id: id, day: day, workouts: try workouts.sorted { $0.position < $1.position }.map { try $0.toModel() })
+    func toLocal() throws -> LocalWorkoutDay {
+        LocalWorkoutDay(id: id, day: day, workouts: try workouts.sorted { $0.position < $1.position }.map { try $0.toLocal() })
     }
 }
 
@@ -140,7 +140,7 @@ private final class ManagedWorkout {
     var statusCode: Int
     var exerciseCount: Int
 
-    init(position: Int, workout: Workout) {
+    init(position: Int, workout: LocalWorkout) {
         self.position = position
         self.id = workout.id
         self.title = workout.title
@@ -148,17 +148,17 @@ private final class ManagedWorkout {
         self.exerciseCount = workout.exerciseCount
     }
 
-    func toModel() throws -> Workout {
-        guard let status = Workout.Status(storedCode: statusCode) else {
+    func toLocal() throws -> LocalWorkout {
+        guard let status = LocalWorkout.Status(storedCode: statusCode) else {
             throw UnknownStatusCode()
         }
-        return Workout(id: id, title: title, status: status, exerciseCount: exerciseCount)
+        return LocalWorkout(id: id, title: title, status: status, exerciseCount: exerciseCount)
     }
 
     private struct UnknownStatusCode: Error {}
 }
 
-private extension Workout.Status {
+private extension LocalWorkout.Status {
     var storedCode: Int {
         switch self {
         case .assigned: 0

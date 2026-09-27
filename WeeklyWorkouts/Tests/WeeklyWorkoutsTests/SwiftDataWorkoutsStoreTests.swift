@@ -66,8 +66,8 @@ struct SwiftDataWorkoutsStoreTests {
         let sut = try makeSUT()
         try await sut.insert(daysOutOfNaturalOrder(), timestamp: Date(timeIntervalSince1970: 1_000))
         let latestDays = [
-            WorkoutDay(id: "day-latest", day: 2, workouts: [
-                Workout(id: "workout-latest", title: "Swim", status: .missed, exerciseCount: 4),
+            LocalWorkoutDay(id: "day-latest", day: 2, workouts: [
+                LocalWorkout(id: "workout-latest", title: "Swim", status: .missed, exerciseCount: 4),
             ]),
         ]
         let latestTimestamp = Date(timeIntervalSince1970: 2_000)
@@ -274,16 +274,16 @@ struct SwiftDataWorkoutsStoreTests {
     }
 
     /// Saved order differs from both `day` order and ID order, so only a store keeping the saved order passes.
-    private func daysOutOfNaturalOrder() -> [WorkoutDay] {
+    private func daysOutOfNaturalOrder() -> [LocalWorkoutDay] {
         [
-            WorkoutDay(id: "day-c", day: 5, workouts: [
-                Workout(id: "workout-z", title: "Legs", status: .completed, exerciseCount: 3),
-                Workout(id: "workout-x", title: "Arms", status: .assigned, exerciseCount: 1),
-                Workout(id: "workout-y", title: "Core", status: .missed, exerciseCount: 7),
+            LocalWorkoutDay(id: "day-c", day: 5, workouts: [
+                LocalWorkout(id: "workout-z", title: "Legs", status: .completed, exerciseCount: 3),
+                LocalWorkout(id: "workout-x", title: "Arms", status: .assigned, exerciseCount: 1),
+                LocalWorkout(id: "workout-y", title: "Core", status: .missed, exerciseCount: 7),
             ]),
-            WorkoutDay(id: "day-a", day: 0, workouts: []),
-            WorkoutDay(id: "day-b", day: 3, workouts: [
-                Workout(id: "workout-w", title: "Run", status: .assigned, exerciseCount: 2),
+            LocalWorkoutDay(id: "day-a", day: 0, workouts: []),
+            LocalWorkoutDay(id: "day-b", day: 3, workouts: [
+                LocalWorkout(id: "workout-w", title: "Run", status: .assigned, exerciseCount: 2),
             ]),
         ]
     }

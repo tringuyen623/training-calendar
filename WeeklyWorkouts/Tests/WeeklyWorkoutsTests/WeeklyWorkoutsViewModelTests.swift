@@ -241,7 +241,7 @@ struct WeeklyWorkoutsViewModelTests {
 
     /// The week is delivered from the cache right away; its background refresh fails without effect.
     private func stubLoadedWeek(_ days: [WorkoutDay], client: HTTPClientSpy, store: WeeklyWorkoutsStoreSpy) {
-        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: wednesdayNoon))
+        store.stubRetrieval(with: CachedWorkouts(days: local(days), timestamp: wednesdayNoon))
         client.stub(error: anyNSError())
     }
 

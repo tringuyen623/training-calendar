@@ -62,7 +62,7 @@ struct WeeklyWorkoutsServiceTests {
         _ = try? await sut.loadWeek()
         await sut.refreshTask?.value
 
-        #expect(store.insertedCaches == [CachedWorkouts(days: serverWeek.days, timestamp: now)])
+        #expect(store.insertedCaches == [CachedWorkouts(days: local(serverWeek.days), timestamp: now)])
     }
 
     @Test func loadWeek_onCachedWeek_keepsCacheWithoutErrorOnFailedRefresh() async throws {
@@ -159,7 +159,7 @@ struct WeeklyWorkoutsServiceTests {
 
         _ = try? await sut.loadWeek()
 
-        #expect(store.insertedCaches == [CachedWorkouts(days: serverWeek.days, timestamp: now)])
+        #expect(store.insertedCaches == [CachedWorkouts(days: local(serverWeek.days), timestamp: now)])
     }
 
     @Test(arguments: APIFailure.allCases)
@@ -195,7 +195,7 @@ struct WeeklyWorkoutsServiceTests {
         } throws: { error in
             error as NSError == retrievalError
         }
-        #expect(store.insertedCaches == [CachedWorkouts(days: serverWeek.days, timestamp: now)])
+        #expect(store.insertedCaches == [CachedWorkouts(days: local(serverWeek.days), timestamp: now)])
     }
 
     // MARK: - Unreadable cache
@@ -209,7 +209,7 @@ struct WeeklyWorkoutsServiceTests {
         let days = try await sut.loadWeek()
 
         #expect(days == serverWeek.days)
-        #expect(store.insertedCaches == [CachedWorkouts(days: serverWeek.days, timestamp: now)])
+        #expect(store.insertedCaches == [CachedWorkouts(days: local(serverWeek.days), timestamp: now)])
     }
 
     // MARK: - Cached week reloaded after a store change
@@ -291,7 +291,7 @@ struct WeeklyWorkoutsServiceTests {
 
     @Test func validateCache_deletesMarksThenCachedWorkoutsOnExpiredCache() async throws {
         let (sut, _, store) = makeSUT()
-        store.stubRetrieval(with: CachedWorkouts(days: makeWeek([makeWorkout(status: .assigned)]), timestamp: date(2026, 9, 25, 18, 0)))
+        store.stubRetrieval(with: CachedWorkouts(days: local(makeWeek([makeWorkout(status: .assigned)])), timestamp: date(2026, 9, 25, 18, 0)))
 
         try await sut.validateCache()
 
@@ -307,7 +307,7 @@ struct WeeklyWorkoutsServiceTests {
     }
 
     private func validCache(_ days: [WorkoutDay]) -> CachedWorkouts {
-        CachedWorkouts(days: days, timestamp: date(2026, 9, 29, 9, 0))
+        CachedWorkouts(days: local(days), timestamp: date(2026, 9, 29, 9, 0))
     }
 
     private func makeWorkout(status: Workout.Status) -> Workout {
