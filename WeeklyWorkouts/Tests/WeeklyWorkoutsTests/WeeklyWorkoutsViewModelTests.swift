@@ -149,6 +149,19 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.errorMessage == nil)
     }
 
+    @Test func display_placesDeliveredWorkoutsIntoTheDaysWithoutRequestingLoadOrToggle() {
+        let (sut, loader, toggler) = makeSUT()
+        let workout = makeWorkout(status: .completed)
+
+        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+
+        #expect(sut.days[tuesday].workouts == [
+            WorkoutCardViewData(id: workout.id, title: workout.title, statusText: "Completed", exerciseCount: "5 exercises", status: .completed),
+        ])
+        #expect(loader.loadCallCount == 0)
+        #expect(toggler.receivedToggles.isEmpty)
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {

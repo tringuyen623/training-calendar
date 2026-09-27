@@ -40,6 +40,11 @@ public final class WeeklyWorkoutsViewModel {
         }
     }
 
+    /// Shows a week delivered outside of `loadWeek`, such as the cached week read again after the cache changed.
+    public func display(_ workoutDays: [WorkoutDay]) {
+        show(workoutDays)
+    }
+
     private func load() async {
         guard !isLoading else { return }
         isLoading = true
