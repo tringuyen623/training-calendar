@@ -45,6 +45,19 @@ struct ValidateWorkoutsCacheUseCaseTests {
         #expect(marksStore.receivedMessages == [.deleteAllMarks])
     }
 
+    @Test func validateCache_failsOnDeletionErrorAfterRetrievalError() async {
+        let (sut, store, _) = makeSUT()
+        let deletionError = NSError(domain: "deletion error", code: 0)
+        store.stubRetrieval(with: anyNSError())
+        store.stubDeletion(with: deletionError)
+
+        await #expect {
+            try await sut.validateCache()
+        } throws: { error in
+            error as NSError == deletionError
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
