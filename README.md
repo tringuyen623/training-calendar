@@ -162,10 +162,10 @@ Given a workout that is completed
 3. System validates the cache was saved in the current week.
 
 #### Retrieval error course (sad path):
-1. System deletes the cache.
+1. System delivers error. Nothing is deleted: the next successful remote load replaces the cache.
 
 #### Cache from a previous week course (sad path):
-1. System deletes the cached workouts and completion marks.
+1. System deletes the completion marks, then the cached workouts.
 
 ---
 
@@ -313,6 +313,7 @@ The brief and the mock API leave a few points open. These are the decisions take
 | 14 | What does loading look like? | The loading frame shows the 7 dates with empty rows; the brief asks for "an empty/loading state" | Each day shows its date and a shimmering placeholder card, so it's clear data is on its way. This is a deliberate difference from the loading frame |
 | 15 | How is a single exercise written? | The design only shows plural counts | "1 exercise", otherwise "N exercises" |
 | 16 | What does the error state look like? | Not in the design | A short one-line message in the design's secondary text style |
+| 17 | Should validation delete a cache it can't read? | Not specified | No. A read can fail temporarily, and deleting would lose a good cache; a truly corrupt cache is replaced by the next successful remote load |
 
 ## Architecture
 

@@ -109,16 +109,18 @@ struct LoadWorkoutsFromCacheUseCaseTests {
 
     @Test func load_hasNoSideEffectsOnExpiredCache() async {
         let now = date(2026, 9, 30, 12, 0)
-        let (sut, store) = makeSUT(currentDate: { now })
+        let marksStore = CompletionMarksStoreSpy()
+        let (sut, store) = makeSUT(marksStore: marksStore, currentDate: { now })
         store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
 
         _ = try? await sut.load()
 
         #expect(store.receivedMessages == [.retrieve])
+        #expect(marksStore.receivedMessages.isEmpty)
     }
 
     @Test func load_treatsMondayAsFirstWeekdayRegardlessOfCalendarSettings() async throws {
-        var sundayFirstCalendar = Self.makeCalendar()
+        var sundayFirstCalendar = makeCalendar()
         sundayFirstCalendar.firstWeekday = 1
         var now = date(2026, 10, 4, 12, 0)
         let (sut, store) = makeSUT(calendar: sundayFirstCalendar, currentDate: { now })
@@ -139,25 +141,11 @@ struct LoadWorkoutsFromCacheUseCaseTests {
 
     private func makeSUT(
         calendar: Calendar = makeCalendar(),
+        marksStore: CompletionMarksStoreSpy = .init(),
         currentDate: @escaping () -> Date = { Date(timeIntervalSince1970: 0) }
     ) -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
         let store = WorkoutsStoreSpy()
-        let sut = LocalWorkoutsLoader(store: store, calendar: calendar, currentDate: currentDate)
+        let sut = LocalWorkoutsLoader(store: store, marksStore: marksStore, calendar: calendar, currentDate: currentDate)
         return (sut, store)
-    }
-
-    private static func makeCalendar() -> Calendar {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/Paris")!
-        calendar.firstWeekday = 2
-        return calendar
-    }
-
-    private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int = 0, _ minute: Int = 0, _ second: Int = 0) -> Date {
-        Self.makeCalendar().date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute, second: second))!
-    }
-
-    private func uniqueCache(savedAt timestamp: Date) -> CachedWorkouts {
-        CachedWorkouts(days: uniqueDays(), timestamp: timestamp)
     }
 }
