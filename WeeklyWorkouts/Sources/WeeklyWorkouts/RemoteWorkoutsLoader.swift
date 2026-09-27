@@ -18,6 +18,8 @@ public final class RemoteWorkoutsLoader: WorkoutsLoader {
         let (data, response): (Data, HTTPURLResponse)
         do {
             (data, response) = try await client.get(from: url)
+        } catch let cancellation as CancellationError {
+            throw cancellation
         } catch {
             throw Error.connectivity
         }

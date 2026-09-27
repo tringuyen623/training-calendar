@@ -37,6 +37,15 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         }
     }
 
+    @Test func load_deliversCancellationErrorOnClientCancellation() async {
+        let (sut, client) = makeSUT()
+        client.result = .failure(CancellationError())
+
+        await #expect(throws: CancellationError.self) {
+            try await sut.load()
+        }
+    }
+
     @Test(arguments: [199, 201, 300, 400, 500])
     func load_deliversInvalidDataErrorOnNon200HTTPResponse(statusCode: Int) async {
         let (sut, client) = makeSUT()
