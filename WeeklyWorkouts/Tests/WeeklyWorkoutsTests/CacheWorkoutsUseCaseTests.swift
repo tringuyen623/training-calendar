@@ -14,13 +14,15 @@ struct CacheWorkoutsUseCaseTests {
 
     @Test func save_requestsNewCacheInsertionWithTimestampOnSuccessfulDeletion() async {
         var now = Date(timeIntervalSince1970: 1_000)
-        let (sut, store) = makeSUT(currentDate: { now })
+        let marksStore = CompletionMarksStoreSpy()
+        let (sut, store) = makeSUT(marksStore: marksStore, currentDate: { now })
         let days = uniqueDays()
 
         now = Date(timeIntervalSince1970: 2_000)
         try? await sut.save(days)
 
         #expect(store.receivedMessages == [.deleteCachedWorkouts, .insert(days, now)])
+        #expect(marksStore.receivedMessages.isEmpty)
     }
 
     @Test func save_hasNoSideEffectsBeyondDeletionAndInsertionOnInsertionError() async {
