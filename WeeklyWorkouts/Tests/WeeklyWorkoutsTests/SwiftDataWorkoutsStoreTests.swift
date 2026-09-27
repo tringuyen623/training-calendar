@@ -3,6 +3,9 @@ import SwiftData
 import Testing
 import WeeklyWorkouts
 
+/// Core Data crashes when containers for the same models are created concurrently, as parallel tests do.
+private let containerCreationLock = NSLock()
+
 struct SwiftDataWorkoutsStoreTests {
     @Test func retrieve_deliversEmptyOnEmptyCache() async throws {
         let sut = try makeSUT()
@@ -30,10 +33,12 @@ struct SwiftDataWorkoutsStoreTests {
     }
 
     private func makeContainer() throws -> ModelContainer {
-        try ModelContainer(
-            for: Schema(SwiftDataWorkoutsStore.models),
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
+        try containerCreationLock.withLock {
+            try ModelContainer(
+                for: Schema(SwiftDataWorkoutsStore.models),
+                configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+            )
+        }
     }
 
     /// Saved order differs from both `day` order and ID order, so only a store keeping the saved order passes.
