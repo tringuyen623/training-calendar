@@ -5,6 +5,8 @@ func uniqueDays() -> [WorkoutDay] {
     [
         WorkoutDay(id: UUID().uuidString, day: 0, workouts: [
             Workout(id: UUID().uuidString, title: "any title", status: .assigned, exerciseCount: 5),
+            Workout(id: UUID().uuidString, title: "another title", status: .missed, exerciseCount: 3),
+            Workout(id: UUID().uuidString, title: "a third title", status: .completed, exerciseCount: 8),
         ]),
         WorkoutDay(id: UUID().uuidString, day: 4, workouts: []),
     ]
