@@ -89,6 +89,15 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(try otherModelsCount(in: container) == 1)
     }
 
+    @Test func delete_hasNoSideEffectsOnEmptyCache() async throws {
+        let sut = try makeSUT()
+
+        try await sut.deleteCachedWorkouts()
+        let cache = try await sut.retrieve()
+
+        #expect(cache == nil)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
