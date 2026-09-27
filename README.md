@@ -126,8 +126,8 @@ Given a workout that is completed
 #### Invalid data – error course (sad path):
 1. System delivers invalid data error.
 
-#### No connectivity – error course (sad path):
-1. System delivers connectivity error.
+#### Request failure – error course (sad path):
+1. System delivers request failure error.
 
 #### Cancel course:
 1. System delivers a cancellation error.
@@ -295,6 +295,7 @@ The brief and the mock API leave a few points open. These are the decisions take
 | 9 | When does the cache expire? | The payload only describes "the current week" (index 0...6, no dates) | The cache is valid while it was saved in the same Mon–Sun week as now. From the next Monday it expires: workouts and completion marks are deleted (so stale marks can't apply if the server reuses IDs). Validity is re-checked when the app returns to the foreground |
 | 10 | What to show when loading fails and there is no valid cache | Neither the brief nor the design defines an error state | Show the empty week with a short error message. No extra error UI is invented; loading is retried on the next launch or when the app returns to the foreground |
 | 11 | What is the API contract? | There is no API documentation, only the mock endpoint's response. In the observed response (7 days, 6 workouts) every field is present and non-null, `status` is 0, 1 or 2, and `day` is 0...6 | The Payload Contract above is inferred from that response, not agreed with a backend team. All its fields are treated as required, and only a `200` response is treated as success. Decoding is strict: a response that doesn't match — including an unknown `status` or a `day` outside 0...6 — is an invalid data error for the whole week |
+| 12 | How are loading errors classified? | The brief doesn't require any specific error handling | Three categories only: any failure to get a response (no network, timeout, TLS failure, a non-HTTP response) is a request failure; a response that can't be used is invalid data; a cancelled load delivers a cancellation error. Finer categories would be added only if the app had to handle them differently |
 
 ## Architecture
 
