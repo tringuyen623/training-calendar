@@ -7,12 +7,12 @@ public final class URLSessionHTTPClient: HTTPClient {
         self.session = session
     }
 
-    private struct UnexpectedResponse: Error {}
+    private struct NonHTTPResponse: Error {}
 
     public func get(from url: URL) async throws -> (Data, HTTPURLResponse) {
         let (data, response) = try await load(from: url)
         guard let response = response as? HTTPURLResponse else {
-            throw UnexpectedResponse()
+            throw NonHTTPResponse()
         }
         return (data, response)
     }
