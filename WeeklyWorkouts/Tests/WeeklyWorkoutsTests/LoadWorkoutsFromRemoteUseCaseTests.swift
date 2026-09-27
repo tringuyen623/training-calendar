@@ -91,6 +91,16 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         }
     }
 
+    @Test(arguments: [-1, 7])
+    func load_deliversInvalidDataErrorOn200HTTPResponseWithDayOutOfRange(day: Int) async {
+        let (sut, client) = makeSUT()
+        client.result = .success((makeJSON(days: [makeDayJSON(day: day)]), HTTPURLResponse(statusCode: 200)))
+
+        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
+            try await sut.load()
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (sut: RemoteWorkoutsLoader, client: HTTPClientSpy) {

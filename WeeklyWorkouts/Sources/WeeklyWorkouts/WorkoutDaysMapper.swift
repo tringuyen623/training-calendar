@@ -25,8 +25,9 @@ enum WorkoutDaysMapper {
             throw InvalidData()
         }
         let root = try JSONDecoder().decode(Root.self, from: data)
+        let days = root.data.map(\.day)
         let statuses = root.data.flatMap(\.assignments).map(\.status)
-        guard statuses.allSatisfy((0...2).contains) else {
+        guard days.allSatisfy((0...6).contains), statuses.allSatisfy((0...2).contains) else {
             throw InvalidData()
         }
         return []
