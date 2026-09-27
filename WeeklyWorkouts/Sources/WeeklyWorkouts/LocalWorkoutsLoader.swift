@@ -12,6 +12,13 @@ public final class LocalWorkoutsLoader: WorkoutsLoader {
     }
 
     public func load() async throws -> [WorkoutDay] {
-        try await store.retrieve()?.days ?? []
+        guard let cache = try await store.retrieve(), isInCurrentWeek(cache.timestamp) else {
+            return []
+        }
+        return cache.days
+    }
+
+    private func isInCurrentWeek(_ timestamp: Date) -> Bool {
+        calendar.isDate(timestamp, equalTo: currentDate(), toGranularity: .weekOfYear)
     }
 }
