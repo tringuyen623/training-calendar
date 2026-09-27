@@ -181,6 +181,17 @@ struct WeeklyWorkoutsServiceTests {
         }
     }
 
+    @Test func loadCachedWeek_doesNotRequestAPIOrWriteToStore() async {
+        let (sut, client, store) = makeSUT()
+        client.stub(statusCode: 200, data: makeServerWeek().json)
+        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
+
+        _ = try? await sut.loadCachedWeek()
+
+        #expect(client.requestedURLs.isEmpty)
+        #expect(store.writes.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func validCache(_ days: [WorkoutDay]) -> CachedWorkouts {
