@@ -10,10 +10,24 @@ let package = Package(
             name: "WeeklyWorkouts",
             targets: ["WeeklyWorkouts"]
         ),
+        .library(
+            name: "WeeklyWorkoutsUI",
+            targets: ["WeeklyWorkoutsUI"]
+        ),
     ],
     targets: [
         .target(
             name: "WeeklyWorkouts",
+            swiftSettings: [
+                .enableUpcomingFeature("ApproachableConcurrency"),
+            ],
+        ),
+        .target(
+            name: "WeeklyWorkoutsUI",
+            dependencies: ["WeeklyWorkouts"],
+            resources: [
+                .process("Resources"),
+            ],
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
             ],
