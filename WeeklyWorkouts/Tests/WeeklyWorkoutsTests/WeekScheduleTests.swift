@@ -41,10 +41,15 @@ struct WeekScheduleTests {
         #expect(status(of: makeWorkout(status: .assigned), on: tuesday) == .missed)
     }
 
+    @Test func days_showsAssignedForNotCompletedWorkoutToday() {
+        #expect(status(of: makeWorkout(status: .missed), on: wednesday) == .assigned)
+    }
+
     // MARK: - Helpers
 
     private let wednesdayNoon = date(2026, 9, 30, 12, 0)
     private let tuesday = 1
+    private let wednesday = 2
 
     private func status(of workout: Workout, on day: Int) -> ScheduledWorkout.Status? {
         let serverDays = [WorkoutDay(id: UUID().uuidString, day: day, workouts: [workout])]
