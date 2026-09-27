@@ -9,6 +9,14 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         #expect(store.receivedMessages.isEmpty)
     }
 
+    @Test func load_requestsCacheRetrieval() async {
+        let (sut, store) = makeSUT()
+
+        _ = try? await sut.load()
+
+        #expect(store.receivedMessages == [.retrieve])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
@@ -23,5 +31,10 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         }
 
         private(set) var receivedMessages: [Message] = []
+
+        func retrieve() async throws -> CachedWorkouts? {
+            receivedMessages.append(.retrieve)
+            return nil
+        }
     }
 }
