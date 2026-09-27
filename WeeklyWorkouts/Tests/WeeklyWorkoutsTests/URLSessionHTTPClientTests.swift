@@ -82,6 +82,20 @@ struct URLSessionHTTPClientTests {
         #expect(receivedResponse.statusCode == 204)
     }
 
+    @Test func get_throwsCancellationErrorOnCancelledTask() async {
+        let sut = makeSUT()
+        let (loadingStarted, loadingStartedContinuation) = AsyncStream.makeStream(of: Void.self)
+        URLProtocolStub.stubNeverCompleting { loadingStartedContinuation.yield() }
+
+        let task = Task { try await sut.get(from: URL(string: "https://any-url.com")!) }
+        for await _ in loadingStarted { break }
+        task.cancel()
+
+        await #expect(throws: CancellationError.self) {
+            try await task.value
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(configuration: URLSessionConfiguration = .ephemeral) -> URLSessionHTTPClient {
@@ -99,10 +113,9 @@ struct URLSessionHTTPClientTests {
     }
 
     private final class URLProtocolStub: URLProtocol {
-        private struct Stub {
-            let data: Data?
-            let response: URLResponse?
-            let error: Error?
+        private enum Stub {
+            case load(data: Data?, response: URLResponse?, error: Error?)
+            case neverComplete(onStartLoading: @Sendable () -> Void)
         }
 
         private struct State {
@@ -117,11 +130,15 @@ struct URLSessionHTTPClientTests {
         }
 
         static func stub(error: Error) {
-            state.withLock { $0.stub = Stub(data: nil, response: nil, error: error) }
+            state.withLock { $0.stub = .load(data: nil, response: nil, error: error) }
         }
 
         static func stub(data: Data?, response: URLResponse) {
-            state.withLock { $0.stub = Stub(data: data, response: response, error: nil) }
+            state.withLock { $0.stub = .load(data: data, response: response, error: nil) }
+        }
+
+        static func stubNeverCompleting(onStartLoading: @escaping @Sendable () -> Void) {
+            state.withLock { $0.stub = .neverComplete(onStartLoading: onStartLoading) }
         }
 
         static func reset() {
@@ -143,17 +160,26 @@ struct URLSessionHTTPClientTests {
                 return state.stub
             }
 
-            if let response = stub?.response {
-                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-            }
+            switch stub {
+            case let .load(data, response, error):
+                if let response {
+                    client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+                }
 
-            if let data = stub?.data {
-                client?.urlProtocol(self, didLoad: data)
-            }
+                if let data {
+                    client?.urlProtocol(self, didLoad: data)
+                }
 
-            if let error = stub?.error {
-                client?.urlProtocol(self, didFailWithError: error)
-            } else {
+                if let error {
+                    client?.urlProtocol(self, didFailWithError: error)
+                } else {
+                    client?.urlProtocolDidFinishLoading(self)
+                }
+
+            case let .neverComplete(onStartLoading):
+                onStartLoading()
+
+            case nil:
                 client?.urlProtocolDidFinishLoading(self)
             }
         }
