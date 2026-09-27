@@ -5,6 +5,7 @@ final class WorkoutsStoreSpy: WorkoutsStore {
     enum Message: Equatable {
         case retrieve
         case deleteCachedWorkouts
+        case insert([WorkoutDay], Date)
     }
 
     private(set) var receivedMessages: [Message] = []
@@ -35,5 +36,9 @@ final class WorkoutsStoreSpy: WorkoutsStore {
     func deleteCachedWorkouts() async throws {
         receivedMessages.append(.deleteCachedWorkouts)
         try deletionResult.get()
+    }
+
+    func insert(_ days: [WorkoutDay], timestamp: Date) async throws {
+        receivedMessages.append(.insert(days, timestamp))
     }
 }

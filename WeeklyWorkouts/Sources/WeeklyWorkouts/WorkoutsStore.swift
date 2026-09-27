@@ -13,4 +13,5 @@ public struct CachedWorkouts: Equatable, Sendable {
 public protocol WorkoutsStore {
     func retrieve() async throws -> CachedWorkouts?
     func deleteCachedWorkouts() async throws
+    func insert(_ days: [WorkoutDay], timestamp: Date) async throws
 }
