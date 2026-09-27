@@ -111,26 +111,68 @@ Given a workout that is completed
 
 ## Use Cases
 
-### Load Workouts From Remote Use Case
+### Load Weekly Workouts Use Case
 
 #### Data:
 - URL
 
-#### Primary course (happy path):
-1. Execute "Load Workouts" command with above data.
-2. System downloads data from the URL.
-3. System validates downloaded data.
-4. System creates weekly workouts from valid data.
-5. System delivers weekly workouts.
+#### Primary course (cached week):
+1. Execute "Load Weekly Workouts" command with above data.
+2. System loads the workouts from cache.
+3. System applies the completion marks to the cached workouts.
+4. System delivers the weekly workouts.
+5. System refreshes the workouts from remote in the background.
 
-#### Invalid data – error course (sad path):
+#### No cached week course (the cache is empty, from a previous week or can't be read):
+1. System downloads data from the URL.
+2. System validates downloaded data.
+3. System creates weekly workouts from valid data.
+4. System replaces the cache with the weekly workouts, without the completion marks.
+5. System applies the completion marks to the weekly workouts.
+6. System delivers the weekly workouts.
+
+#### Refresh from remote course:
+1. System downloads data from the URL.
+2. System validates downloaded data.
+3. System creates weekly workouts from valid data.
+4. System replaces the cache with the weekly workouts, without the completion marks. The cache notifies the change.
+
+#### Apply completion marks course:
+1. System retrieves the completion marks.
+2. For each workout with a mark, System sets whether it's completed as the mark says, whatever the server status.
+3. Workouts without a mark keep the server's completion.
+4. System ignores marks for workouts that aren't in the week.
+
+#### Failed refresh course (cached week):
+1. System keeps the cache and delivers no error.
+
+#### Invalid data – error course (no cached week):
 1. System delivers invalid data error.
 
-#### Request failure – error course (sad path):
+#### Request failure – error course (no cached week):
 1. System delivers request failure error.
 
-#### Cancel course:
+#### Cancel course (no cached week):
 1. System delivers a cancellation error.
+
+#### Saving error course:
+1. System still delivers the weekly workouts.
+
+#### Marks retrieval error course (sad path):
+1. System delivers error. With a cached week, no refresh starts.
+
+---
+
+### Reload Cached Weekly Workouts Use Case
+
+#### Primary course:
+1. Execute "Reload Cached Weekly Workouts" command, when the cache notifies a change.
+2. System loads the workouts from cache.
+3. System applies the completion marks to the cached workouts.
+4. System delivers the weekly workouts, without loading from remote.
+
+#### Retrieval error course (sad path):
+1. System delivers error.
 
 ---
 
@@ -205,24 +247,6 @@ Given a workout that is completed
 #### Saving error course (sad path):
 1. System keeps the previous mark.
 2. System delivers error.
-
----
-
-### Apply Completion Marks Use Case
-
-#### Data:
-- Weekly workouts
-
-#### Primary course:
-1. Execute "Apply Completion Marks" command with above data.
-2. System retrieves the completion marks.
-3. For each workout with a mark, System sets whether it's completed as the mark says, whatever the server status.
-4. Workouts without a mark keep the server's completion.
-5. System ignores marks for workouts that aren't in the week.
-6. System delivers the weekly workouts.
-
-#### Retrieval error course (sad path):
-1. System delivers error.
 
 ## Flowchart
 
@@ -318,6 +342,7 @@ The brief and the mock API leave a few points open. These are the decisions take
 | 15 | How is a single exercise written? | The design only shows plural counts | "1 exercise", otherwise "N exercises" |
 | 16 | What does the error state look like? | Not in the design | A system alert when loading or saving a change fails; the week stays on screen behind it |
 | 17 | Should validation delete a cache it can't read? | Not specified | No. A read can fail temporarily, and deleting would lose a good cache; a truly corrupt cache is replaced by the next successful remote load |
+| 18 | What if saving the loaded week fails? | Not specified | The loaded week is still displayed: it is valid data, and failing to cache it doesn't make it wrong. The next load saves it again |
 
 ## Architecture
 
@@ -327,16 +352,21 @@ graph TD
     App --> Package
     UI --> Package
     subgraph Package["WeeklyWorkouts"]
-        Remote["Remote workouts loader<br/>API"] -. conforms to .-> Loader["Workouts loader<br/>protocol"]
-        Local["Local workouts loader<br/>cache"] -. conforms to .-> Loader
+        ViewModel["Weekly workouts ViewModel"] --> Service["Weekly workouts service<br/>cached week first, refreshed from the API,<br/>completion marks applied on the way out"]
+        ViewModel --> Toggler["Workout completion toggler"]
+        Service --> Client["HTTP client<br/>protocol"]
+        Service --> Mapper["Workout days mapper<br/>API payload"]
+        Service --> Local["Local workouts loader<br/>cache"]
+        Service --> Marks["Completion marks store<br/>protocol"]
         Local --> Store["Workouts store<br/>protocol, notifies changes"]
-        Local --> Marks["Completion marks store<br/>protocol"]
-        Toggler["Workout completion toggler"] --> Marks
-        Applier["Completion marks applier"] --> Marks
+        Local --> Marks
+        Toggler --> Marks
+        URLSession["URLSession HTTP client"] -. conforms to .-> Client
         SwiftData["SwiftData workouts store<br/>cached workouts and completion marks,<br/>kept as separate models"] -. conforms to .-> Store
         SwiftData -. conforms to .-> Marks
-        Loader --> Models["Weekly workouts<br/>models"]
-        Schedule["Week schedule<br/>current week, displayed status"] --> Models
+        Service --> Models["Weekly workouts<br/>models"]
+        ViewModel --> Schedule["Week schedule<br/>current week, displayed status"]
+        Schedule --> Models
     end
 ```
 

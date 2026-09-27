@@ -31,7 +31,7 @@ struct ToggleWorkoutCompletionUseCaseTests {
     @Test func toggle_failsOnInsertionError() async {
         let (sut, marksStore) = makeSUT()
         let insertionError = anyNSError()
-        marksStore.stubInsertion(with: insertionError)
+        marksStore.stubMarkInsertion(with: insertionError)
 
         await #expect {
             try await sut.toggle(workoutID: UUID().uuidString, isCompleted: false)
@@ -43,7 +43,7 @@ struct ToggleWorkoutCompletionUseCaseTests {
     @Test func toggle_hasNoSideEffectsBeyondInsertionOnInsertionError() async {
         let (sut, marksStore) = makeSUT()
         let workoutID = UUID().uuidString
-        marksStore.stubInsertion(with: anyNSError())
+        marksStore.stubMarkInsertion(with: anyNSError())
 
         _ = try? await sut.toggle(workoutID: workoutID, isCompleted: false)
 
@@ -52,8 +52,8 @@ struct ToggleWorkoutCompletionUseCaseTests {
 
     // MARK: - Helpers
 
-    private func makeSUT() -> (sut: WorkoutCompletionToggler, marksStore: CompletionMarksStoreSpy) {
-        let marksStore = CompletionMarksStoreSpy()
+    private func makeSUT() -> (sut: WorkoutCompletionToggler, marksStore: WeeklyWorkoutsStoreSpy) {
+        let marksStore = WeeklyWorkoutsStoreSpy()
         let sut = WorkoutCompletionToggler(marksStore: marksStore)
         return (sut, marksStore)
     }

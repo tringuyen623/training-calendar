@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import WeeklyWorkouts
+@testable import WeeklyWorkouts
 
 struct LoadWorkoutsFromCacheUseCaseTests {
     @Test func init_doesNotMessageStoreUponCreation() {
@@ -109,14 +109,12 @@ struct LoadWorkoutsFromCacheUseCaseTests {
 
     @Test func load_hasNoSideEffectsOnExpiredCache() async {
         let now = date(2026, 9, 30, 12, 0)
-        let marksStore = CompletionMarksStoreSpy()
-        let (sut, store) = makeSUT(marksStore: marksStore, currentDate: { now })
+        let (sut, store) = makeSUT(currentDate: { now })
         store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
 
         _ = try? await sut.load()
 
         #expect(store.receivedMessages == [.retrieve])
-        #expect(marksStore.receivedMessages.isEmpty)
     }
 
     @Test func load_treatsMondayAsFirstWeekdayRegardlessOfCalendarSettings() async throws {
@@ -141,11 +139,10 @@ struct LoadWorkoutsFromCacheUseCaseTests {
 
     private func makeSUT(
         calendar: Calendar = makeCalendar(),
-        marksStore: CompletionMarksStoreSpy = .init(),
         currentDate: @escaping () -> Date = { Date(timeIntervalSince1970: 0) }
-    ) -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
-        let store = WorkoutsStoreSpy()
-        let sut = LocalWorkoutsLoader(store: store, marksStore: marksStore, calendar: calendar, currentDate: currentDate)
+    ) -> (sut: LocalWorkoutsLoader, store: WeeklyWorkoutsStoreSpy) {
+        let store = WeeklyWorkoutsStoreSpy()
+        let sut = LocalWorkoutsLoader(store: store, marksStore: store, calendar: calendar, currentDate: currentDate)
         return (sut, store)
     }
 }

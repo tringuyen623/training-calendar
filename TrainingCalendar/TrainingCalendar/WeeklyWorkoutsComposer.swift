@@ -5,20 +5,22 @@ import WeeklyWorkouts
 /// Creates the week screen's objects and delivers the cached week to the ViewModel whenever the store changes.
 final class WeeklyWorkoutsComposer {
     let viewModel: WeeklyWorkoutsViewModel
-    private let localLoader: LocalWorkoutsLoader
-    private let marksApplier: CompletionMarksApplier
+    private let service: WeeklyWorkoutsService
 
     init() {
         let calendar = Calendar.current
         let store = SwiftDataWorkoutsStore(modelContainer: Self.makeContainer())
-        let localLoader = LocalWorkoutsLoader(store: store, marksStore: store, calendar: calendar, currentDate: Date.init)
-        let marksApplier = CompletionMarksApplier(marksStore: store)
-        let remoteLoader = RemoteWorkoutsLoader(url: Self.workoutsURL, client: URLSessionHTTPClient(session: Self.makeSession()))
+        let service = WeeklyWorkoutsService(
+            url: Self.workoutsURL,
+            client: URLSessionHTTPClient(session: Self.makeSession()),
+            store: store,
+            calendar: calendar,
+            currentDate: Date.init
+        )
 
-        self.localLoader = localLoader
-        self.marksApplier = marksApplier
+        self.service = service
         self.viewModel = WeeklyWorkoutsViewModel(
-            loader: CacheFirstWorkoutsLoader(local: localLoader, remote: remoteLoader, marksApplier: marksApplier),
+            service: service,
             toggler: WorkoutCompletionToggler(marksStore: store),
             calendar: calendar,
             now: Date.init
@@ -32,11 +34,11 @@ final class WeeklyWorkoutsComposer {
     }
 
     func validateCache() async {
-        try? await localLoader.validateCache()
+        try? await service.validateCache()
     }
 
     private func displayCachedWeek() async {
-        guard let week = try? await marksApplier.apply(to: localLoader.load()) else { return }
+        guard let week = try? await service.loadCachedWeek() else { return }
         viewModel.display(week)
     }
 
