@@ -154,40 +154,4 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         let sut = RemoteWorkoutsLoader(url: url, client: client)
         return (sut, client)
     }
-
-    private func makeJSON(days: [[String: Any]]) -> Data {
-        try! JSONSerialization.data(withJSONObject: ["data": days])
-    }
-
-    private func makeDayJSON(id: String = "any-day-id", day: Int = 0, workouts: [[String: Any]] = []) -> [String: Any] {
-        ["_id": id, "day": day, "assignments": workouts]
-    }
-
-    private func makeWorkoutJSON(id: String = "any-workout-id", title: String = "any title", status: Int = 0, exerciseCount: Int = 1) -> [String: Any] {
-        ["_id": id, "title": title, "status": status, "total_exercise": exerciseCount]
-    }
-
-    private final class HTTPClientSpy: HTTPClient {
-        private(set) var requestedURLs: [URL] = []
-        private var result: Result<(Data, HTTPURLResponse), Error> = .failure(NSError(domain: "not stubbed", code: 0))
-
-        func stub(error: Error) {
-            result = .failure(error)
-        }
-
-        func stub(statusCode: Int, data: Data) {
-            result = .success((data, HTTPURLResponse(statusCode: statusCode)))
-        }
-
-        func get(from url: URL) async throws -> (Data, HTTPURLResponse) {
-            requestedURLs.append(url)
-            return try result.get()
-        }
-    }
-}
-
-private extension HTTPURLResponse {
-    convenience init(statusCode: Int) {
-        self.init(url: URL(string: "https://any-url.com")!, statusCode: statusCode, httpVersion: nil, headerFields: nil)!
-    }
 }
