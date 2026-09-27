@@ -31,7 +31,7 @@ The feature logic has no UI dependency, so its tests run on macOS without a simu
 - `WeeklyWorkouts/` — Swift package: the `WeeklyWorkouts` target (models, API, cache, rules, ViewModel) and the `WeeklyWorkoutsUI` target (SwiftUI views).
 - `TrainingCalendar/` — the iOS app: composition root only.
 
-Inside the `WeeklyWorkouts` target, code is grouped by capability: `Weekly Workouts Feature` (the models and their rules), `Weekly Workouts Application Service` (`WeeklyWorkoutsService`, one extension per use case), `Weekly Workouts API`, `Weekly Workouts Cache` and `Weekly Workouts Presentation`. Each concrete adapter (the URLSession client, the SwiftData store) sits in an `Infrastructure` folder inside its capability.
+Inside the `WeeklyWorkouts` target, code is grouped by capability: `Weekly Workouts Feature` (the models and their rules), `Weekly Workouts API`, `Weekly Workouts Cache` and `Weekly Workouts Presentation`. `WeeklyWorkoutsService`, the feature's application service, sits at the target's root because it coordinates all of them: one extension per use case in this README, with no business rules of its own. Each concrete adapter (the URLSession client, the SwiftData store) sits in an `Infrastructure` folder inside its capability.
 
 ## Feature Specs
 
@@ -395,9 +395,7 @@ graph TD
             ViewModel["Weekly workouts ViewModel"]
             ViewData["View data"]
         end
-        subgraph Application["Application Service"]
-            Service["Weekly workouts service"]
-        end
+        Service["Weekly workouts<br/>application service"]
         subgraph Feature["Feature"]
             Domain["Workout days and week rules"]
         end
@@ -431,7 +429,7 @@ graph TD
     style UIModule fill:#EDE9FE,stroke:#7C3AED,color:#111827
     style Package fill:#FFFFFF,stroke:#374151,color:#111827
     style Presentation fill:#DBEAFE,stroke:#2563EB,color:#111827
-    style Application fill:#CCFBF1,stroke:#0D9488,color:#111827
+    style Service fill:#CCFBF1,stroke:#0D9488,color:#111827
     style Feature fill:#DCFCE7,stroke:#16A34A,color:#111827
     style API fill:#FFEDD5,stroke:#EA580C,color:#111827
     style Cache fill:#FEF9C3,stroke:#CA8A04,color:#111827
