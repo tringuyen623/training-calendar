@@ -23,7 +23,9 @@ public final class WeeklyWorkoutsService {
 
     public func loadWeek() async throws -> [WorkoutDay] {
         let (data, response) = try await fetch()
-        return try map(data, from: response)
+        let days = try map(data, from: response)
+        try await local.save(days)
+        return days
     }
 
     private func fetch() async throws -> (Data, HTTPURLResponse) {
