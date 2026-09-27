@@ -330,6 +330,7 @@ graph TD
         Local --> Marks["Completion marks store<br/>protocol"]
         Toggler["Workout completion toggler"] --> Marks
         Loader --> Models["Weekly workouts<br/>models"]
+        Schedule["Week schedule<br/>current week, displayed status"] --> Models
     end
 ```
 
