@@ -8,4 +8,9 @@ public final class RemoteWorkoutsLoader {
         self.url = url
         self.client = client
     }
+
+    public func load() async throws -> [WorkoutDay] {
+        _ = try await client.get(from: url)
+        return []
+    }
 }
