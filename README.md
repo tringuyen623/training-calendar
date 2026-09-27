@@ -221,6 +221,61 @@ Given a workout that is completed
 #### Remote error with nothing delivered course (sad path):
 1. System delivers error.
 
+## Model Specs
+
+### Workout Day
+
+| Property | Type |
+| --- | --- |
+| `id` | `String` |
+| `day` | `Int` (0 = Monday … 6 = Sunday) |
+| `workouts` | `[Workout]` |
+
+### Workout
+
+| Property | Type |
+| --- | --- |
+| `id` | `String` |
+| `title` | `String` |
+| `status` | `assigned` (0), `missed` (1) or `completed` (2) |
+| `exerciseCount` | `Int` |
+
+## Payload Contract
+
+```
+GET https://mock.internalef.com/workouts
+
+200 RESPONSE
+
+{
+  "data": [
+    {
+      "_id": "68c0a1f45b9d4a0017c8e104",
+      "day": 4,
+      "assignments": [
+        {
+          "_id": "68c0a1f45b9d4a0017c8e204",
+          "title": "Legs day",
+          "status": 0,
+          "total_exercise": 7
+        },
+        {
+          "_id": "68c0a1f45b9d4a0017c8e205",
+          "title": "HIIT Tabata 20:10 8x8",
+          "status": 0,
+          "total_exercise": 15
+        }
+      ]
+    },
+    {
+      "_id": "68c0a1f45b9d4a0017c8e105",
+      "day": 5,
+      "assignments": []
+    }
+  ]
+}
+```
+
 ## Assumptions & Decisions
 
 The brief and the mock API leave a few points open. These are the decisions taken and why.
@@ -237,14 +292,23 @@ The brief and the mock API leave a few points open. These are the decisions take
 | 8 | Remote fetch fails while cached data is shown | Not specified | Keep the cached data and show no error — it is still valid for this week, and the next launch or foreground refetches |
 | 9 | When does the cache expire? | The payload only describes "the current week" (index 0...6, no dates) | The cache is valid while it was saved in the same Mon–Sun week as now. From the next Monday it expires: workouts and completion marks are deleted (so stale marks can't apply if the server reuses IDs). Validity is re-checked when the app returns to the foreground |
 | 10 | What to show when loading fails and there is no valid cache | Neither the brief nor the design defines an error state | Show the empty week with a short error message. No extra error UI is invented; loading is retried on the next launch or when the app returns to the foreground |
+| 11 | What is the API contract? | There is no API documentation, only the response of the mock endpoint | The Payload Contract above is inferred from the observed response, not agreed with a backend team. Decoding is strict: a response that doesn't match it — including an unknown `status` or a `day` outside 0...6 — is an invalid data error for the whole week |
 
 ## Architecture
 
 ```mermaid
 graph TD
     App["TrainingCalendar app<br/>composition root"] --> UI["WeeklyWorkoutsUI<br/>SwiftUI views"]
-    App --> Logic["WeeklyWorkouts<br/>feature logic, no UI framework"]
-    UI --> Logic
+    App --> Package
+    UI --> Package
+    subgraph Package["WeeklyWorkouts"]
+        Weekly["Cache-then-remote loader"] -. conforms to .-> Loader["Workouts loader<br/>protocol"]
+        Weekly -- has --> Remote["Remote workouts loader<br/>API"]
+        Weekly -- has --> Local["Local workouts loader<br/>cache"]
+        Remote -. conforms to .-> Loader
+        Local -. conforms to .-> Loader
+        Loader --> Models["Weekly workouts<br/>models"]
+    end
 ```
 
-Arrows mean "depends on". The internal structure of `WeeklyWorkouts` emerges through TDD; this diagram is updated as it does.
+Solid arrows mean "depends on"; dotted arrows mean "conforms to". The internal structure of `WeeklyWorkouts` emerges through TDD; this diagram is updated as it does.
