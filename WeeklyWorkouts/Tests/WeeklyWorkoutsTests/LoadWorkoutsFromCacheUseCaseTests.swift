@@ -139,10 +139,11 @@ struct LoadWorkoutsFromCacheUseCaseTests {
 
     private func makeSUT(
         calendar: Calendar = makeCalendar(),
+        marksStore: CompletionMarksStoreSpy = .init(),
         currentDate: @escaping () -> Date = { Date(timeIntervalSince1970: 0) }
     ) -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
         let store = WorkoutsStoreSpy()
-        let sut = LocalWorkoutsLoader(store: store, calendar: calendar, currentDate: currentDate)
+        let sut = LocalWorkoutsLoader(store: store, marksStore: marksStore, calendar: calendar, currentDate: currentDate)
         return (sut, store)
     }
 }

@@ -69,10 +69,11 @@ struct CacheWorkoutsUseCaseTests {
     // MARK: - Helpers
 
     private func makeSUT(
+        marksStore: CompletionMarksStoreSpy = .init(),
         currentDate: @escaping () -> Date = { Date(timeIntervalSince1970: 0) }
     ) -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
         let store = WorkoutsStoreSpy()
-        let sut = LocalWorkoutsLoader(store: store, calendar: Calendar(identifier: .gregorian), currentDate: currentDate)
+        let sut = LocalWorkoutsLoader(store: store, marksStore: marksStore, calendar: Calendar(identifier: .gregorian), currentDate: currentDate)
         return (sut, store)
     }
 }

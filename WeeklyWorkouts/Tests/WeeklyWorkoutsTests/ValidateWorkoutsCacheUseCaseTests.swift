@@ -1,0 +1,26 @@
+import Foundation
+import Testing
+import WeeklyWorkouts
+
+struct ValidateWorkoutsCacheUseCaseTests {
+    @Test func validateCache_deletesCacheOnRetrievalError() async throws {
+        let (sut, store, marksStore) = makeSUT()
+        store.stubRetrieval(with: anyNSError())
+
+        try await sut.validateCache()
+
+        #expect(store.receivedMessages == [.retrieve, .deleteCachedWorkouts])
+        #expect(marksStore.receivedMessages.isEmpty)
+    }
+
+    // MARK: - Helpers
+
+    private func makeSUT(
+        currentDate: @escaping () -> Date = { Date(timeIntervalSince1970: 0) }
+    ) -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy, marksStore: CompletionMarksStoreSpy) {
+        let store = WorkoutsStoreSpy()
+        let marksStore = CompletionMarksStoreSpy()
+        let sut = LocalWorkoutsLoader(store: store, marksStore: marksStore, calendar: makeCalendar(), currentDate: currentDate)
+        return (sut, store, marksStore)
+    }
+}
