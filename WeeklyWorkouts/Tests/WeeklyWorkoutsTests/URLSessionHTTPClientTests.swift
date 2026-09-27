@@ -32,6 +32,20 @@ struct URLSessionHTTPClientTests {
         #expect(URLProtocolStub.observedRequests.map(\.cachePolicy) == [.useProtocolCachePolicy])
     }
 
+    @Test func get_failsOnRequestError() async {
+        let requestError = anyNSError()
+        let sut = makeSUT()
+        URLProtocolStub.stub(error: requestError)
+
+        do {
+            _ = try await sut.get(from: URL(string: "https://any-url.com")!)
+            Issue.record("Expected an error, got a result instead")
+        } catch let error as NSError {
+            #expect(error.domain == requestError.domain)
+            #expect(error.code == requestError.code)
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(configuration: URLSessionConfiguration = .ephemeral) -> URLSessionHTTPClient {
