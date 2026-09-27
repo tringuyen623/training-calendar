@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// The week screen's state: always the seven days of the current week, with the delivered workouts placed into them.
-/// It only formats what `WeekSchedule` derives; it loads through the injected service and saves completions through the injected toggler.
+/// It only formats what `WeekSchedule` derives; it loads and saves completions through the injected service.
 @MainActor
 @Observable
 public final class WeeklyWorkoutsViewModel {
@@ -20,18 +20,15 @@ public final class WeeklyWorkoutsViewModel {
     @ObservationIgnored private var workoutDays: [WorkoutDay] = []
 
     private let service: WeeklyWorkoutsService
-    private let toggler: WorkoutCompletionToggler
     private let calendar: Calendar
     private let now: () -> Date
 
     public init(
         service: WeeklyWorkoutsService,
-        toggler: WorkoutCompletionToggler,
         calendar: Calendar,
         now: @escaping () -> Date
     ) {
         self.service = service
-        self.toggler = toggler
         self.calendar = calendar
         self.now = now
         show([])
@@ -72,7 +69,7 @@ public final class WeeklyWorkoutsViewModel {
         let isCompleted = workout.isCompleted
         show(settingCompletion(!isCompleted, ofWorkout: workoutID, in: workoutDays))
         do {
-            _ = try await toggler.toggle(workoutID: workoutID, isCompleted: isCompleted)
+            _ = try await service.toggle(workoutID: workoutID, isCompleted: isCompleted)
         } catch {
             show(settingCompletion(isCompleted, ofWorkout: workoutID, in: workoutDays))
             errorMessage = "Couldn't save your change"

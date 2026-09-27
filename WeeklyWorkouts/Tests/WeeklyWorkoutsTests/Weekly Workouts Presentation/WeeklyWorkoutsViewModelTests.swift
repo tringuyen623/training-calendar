@@ -232,7 +232,6 @@ struct WeeklyWorkoutsViewModelTests {
         let service = WeeklyWorkoutsService(url: URL(string: "https://a-url.com")!, client: client, store: store, calendar: calendar, currentDate: now)
         let sut = WeeklyWorkoutsViewModel(
             service: service,
-            toggler: WorkoutCompletionToggler(marksStore: store),
             calendar: calendar,
             now: now
         )
