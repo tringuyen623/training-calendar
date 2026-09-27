@@ -139,6 +139,16 @@ struct WeeklyWorkoutsViewModelTests {
         await loading.value
     }
 
+    @Test func dismissError_clearsErrorMessage() async {
+        let (sut, loader, _) = makeSUT()
+        loader.stub(.failure(anyNSError()))
+        await sut.send(.loadWeek)
+
+        await sut.send(.dismissError)
+
+        #expect(sut.errorMessage == nil)
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {

@@ -6,6 +6,7 @@ import Observation
 public final class WeeklyWorkoutsViewModel {
     public enum Action: Equatable, Sendable {
         case loadWeek
+        case dismissError
     }
 
     public private(set) var days: [DayViewData] = []
@@ -43,6 +44,8 @@ public final class WeeklyWorkoutsViewModel {
                 errorMessage = "Couldn't load workouts"
             }
             isLoading = false
+        case .dismissError:
+            errorMessage = nil
         }
     }
 
