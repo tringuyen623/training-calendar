@@ -8,6 +8,7 @@ public final class WeeklyWorkoutsService {
     private let client: HTTPClient
     private let store: WeeklyWorkoutsStore
     private let local: LocalWorkoutsLoader
+    private(set) var refreshTask: Task<Void, Never>?
 
     public enum Error: Swift.Error, Equatable {
         case requestFailure
@@ -22,7 +23,12 @@ public final class WeeklyWorkoutsService {
     }
 
     public func loadWeek() async throws -> [WorkoutDay] {
-        try await applyingMarks(to: refresh())
+        let cached = try await local.load()
+        guard cached.isEmpty else {
+            refreshTask = Task { _ = try? await refresh() }
+            return try await applyingMarks(to: cached)
+        }
+        return try await applyingMarks(to: refresh())
     }
 
     public func loadCachedWeek() async throws -> [WorkoutDay] {

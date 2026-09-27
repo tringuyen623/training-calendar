@@ -13,6 +13,22 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.receivedMessages.isEmpty)
     }
 
+    // MARK: - Cached week
+
+    @Test func loadWeek_onCachedWeek_deliversItWithMarksAppliedWithoutWaitingForTheAPI() async throws {
+        let (sut, client, store) = makeSUT()
+        let assigned = makeWorkout(status: .assigned)
+        let missed = makeWorkout(status: .missed)
+        store.stubRetrieval(with: validCache(makeWeek([assigned, missed])))
+        store.stubMarksRetrieval(with: [missed.id: true])
+        client.stubPendingRequest()
+
+        let days = try await sut.loadWeek()
+
+        #expect(days == makeWeek([assigned, missed.with(status: .completed)]))
+        await completePendingRefresh(of: sut, on: client)
+    }
+
     // MARK: - No cached week
 
     @Test func loadWeek_onEmptyCache_requestsDataFromURLOnce() async {
@@ -193,6 +209,12 @@ struct WeeklyWorkoutsServiceTests {
     }
 
     // MARK: - Helpers
+
+    private func completePendingRefresh(of sut: WeeklyWorkoutsService, on client: HTTPClientSpy) async {
+        await client.waitForPendingRequest()
+        client.completePendingRequest(with: anyNSError())
+        await sut.refreshTask?.value
+    }
 
     private func validCache(_ days: [WorkoutDay]) -> CachedWorkouts {
         CachedWorkouts(days: days, timestamp: date(2026, 9, 29, 9, 0))
