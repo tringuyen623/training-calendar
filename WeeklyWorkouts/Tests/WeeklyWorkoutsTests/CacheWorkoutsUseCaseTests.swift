@@ -46,6 +46,18 @@ struct CacheWorkoutsUseCaseTests {
         }
     }
 
+    @Test func save_failsOnInsertionError() async {
+        let (sut, store) = makeSUT()
+        let insertionError = anyNSError()
+        store.stubInsertion(with: insertionError)
+
+        await #expect {
+            try await sut.save(uniqueDays())
+        } throws: { error in
+            error as NSError == insertionError
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
