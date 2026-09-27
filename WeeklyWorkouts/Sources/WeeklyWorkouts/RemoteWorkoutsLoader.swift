@@ -5,7 +5,7 @@ public final class RemoteWorkoutsLoader: WorkoutsLoader {
     private let client: HTTPClient
 
     public enum Error: Swift.Error, Equatable {
-        case connectivity
+        case requestFailure
         case invalidData
     }
 
@@ -21,7 +21,7 @@ public final class RemoteWorkoutsLoader: WorkoutsLoader {
         } catch let cancellation as CancellationError {
             throw cancellation
         } catch {
-            throw Error.connectivity
+            throw Error.requestFailure
         }
 
         do {

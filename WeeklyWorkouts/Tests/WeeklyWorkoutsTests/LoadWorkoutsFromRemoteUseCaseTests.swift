@@ -28,11 +28,11 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         #expect(client.requestedURLs == [url, url])
     }
 
-    @Test func load_deliversConnectivityErrorOnClientError() async {
+    @Test func load_deliversRequestFailureErrorOnClientError() async {
         let (sut, client) = makeSUT()
         client.stub(error: anyNSError())
 
-        await #expect(throws: RemoteWorkoutsLoader.Error.connectivity) {
+        await #expect(throws: RemoteWorkoutsLoader.Error.requestFailure) {
             try await sut.load()
         }
     }
