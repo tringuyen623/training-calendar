@@ -13,6 +13,16 @@ struct ValidateWorkoutsCacheUseCaseTests {
         #expect(marksStore.receivedMessages.isEmpty)
     }
 
+    @Test func validateCache_hasNoSideEffectsOnEmptyCache() async throws {
+        let (sut, store, marksStore) = makeSUT()
+        store.stubEmptyCache()
+
+        try await sut.validateCache()
+
+        #expect(store.receivedMessages == [.retrieve])
+        #expect(marksStore.receivedMessages.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
