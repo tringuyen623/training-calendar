@@ -287,6 +287,15 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.writes.isEmpty)
     }
 
+    // MARK: - Needs loading
+
+    @Test func needsLoading_onCachedWeek_isFalse() async {
+        let (sut, _, store) = makeSUT()
+        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
+
+        #expect(await sut.needsLoading() == false)
+    }
+
     // MARK: - Cache validation
 
     @Test func validateCache_deletesMarksThenCachedWorkoutsOnExpiredCache() async throws {

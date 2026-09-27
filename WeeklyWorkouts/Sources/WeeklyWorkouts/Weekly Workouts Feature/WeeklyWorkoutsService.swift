@@ -41,6 +41,10 @@ public final class WeeklyWorkoutsService {
         try await applyingMarks(to: local.load())
     }
 
+    public func needsLoading() async -> Bool {
+        false
+    }
+
     public func validateCache() async throws {
         try await local.validateCache()
     }
