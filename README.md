@@ -155,18 +155,22 @@ Given a workout that is completed
 5. System refreshes the workouts from remote in the background.
 
 #### No cached week course (the cache is empty, from a previous week or can't be read):
-1. System loads the workouts from remote (Load Workouts From Remote).
-2. System replaces the cache with the weekly workouts, without the completion marks.
-3. System applies the completion marks to the weekly workouts.
-4. System delivers the weekly workouts.
+1. System downloads data from the URL.
+2. System validates downloaded data.
+3. System creates weekly workouts from valid data.
+4. System replaces the cache with the weekly workouts, without the completion marks.
+5. System applies the completion marks to the weekly workouts.
+6. System delivers the weekly workouts.
 
 #### Needs loading course:
 1. System loads the workouts from cache.
 2. System delivers whether there's no cached week for the current week, without loading from remote or writing to the cache.
 
 #### Refresh from remote course:
-1. System loads the workouts from remote (Load Workouts From Remote).
-2. System replaces the cache with the weekly workouts, without the completion marks. The cache notifies the change.
+1. System downloads data from the URL.
+2. System validates downloaded data.
+3. System creates weekly workouts from valid data.
+4. System replaces the cache with the weekly workouts, without the completion marks. The cache notifies the change.
 
 #### Apply completion marks course:
 1. System retrieves the completion marks.
@@ -177,8 +181,14 @@ Given a workout that is completed
 #### Failed refresh course (cached week):
 1. System keeps the cache and delivers no error.
 
-#### Remote error course (no cached week):
-1. System delivers the error from Load Workouts From Remote: invalid data, request failure or cancellation.
+#### Invalid data – error course (no cached week):
+1. System delivers invalid data error.
+
+#### Request failure – error course (no cached week):
+1. System delivers request failure error.
+
+#### Cancel course (no cached week):
+1. System delivers a cancellation error.
 
 #### Saving error course:
 1. System still delivers the weekly workouts.
