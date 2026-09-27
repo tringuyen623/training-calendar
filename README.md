@@ -327,6 +327,8 @@ graph TD
         Remote["Remote workouts loader<br/>API"] -. conforms to .-> Loader["Workouts loader<br/>protocol"]
         Local["Local workouts loader<br/>cache"] -. conforms to .-> Loader
         Local --> Store["Workouts store<br/>protocol, notifies changes"]
+        Local --> Marks["Completion marks store<br/>protocol"]
+        Toggler["Workout completion toggler"] --> Marks
         Loader --> Models["Weekly workouts<br/>models"]
     end
 ```
