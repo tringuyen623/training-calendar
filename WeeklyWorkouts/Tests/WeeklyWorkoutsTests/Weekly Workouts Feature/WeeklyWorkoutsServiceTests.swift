@@ -296,6 +296,14 @@ struct WeeklyWorkoutsServiceTests {
         #expect(await sut.needsLoading() == false)
     }
 
+    @Test(arguments: NoCachedWeek.allCases)
+    func needsLoading_withoutCachedWeek_isTrue(_ noCachedWeek: NoCachedWeek) async {
+        let (sut, _, store) = makeSUT()
+        noCachedWeek.stub(on: store)
+
+        #expect(await sut.needsLoading() == true)
+    }
+
     // MARK: - Cache validation
 
     @Test func validateCache_deletesMarksThenCachedWorkoutsOnExpiredCache() async throws {
@@ -328,6 +336,21 @@ struct WeeklyWorkoutsServiceTests {
             WorkoutDay(id: "monday-id", day: 0, workouts: workouts),
             WorkoutDay(id: "friday-id", day: 4, workouts: []),
         ]
+    }
+
+    enum NoCachedWeek: CaseIterable, Sendable {
+        /// Never loaded, or deleted by the cache validation.
+        case emptyCache
+        case cacheFromPreviousWeek
+
+        func stub(on store: WeeklyWorkoutsStoreSpy) {
+            switch self {
+            case .emptyCache:
+                store.stubEmptyCache()
+            case .cacheFromPreviousWeek:
+                store.stubRetrieval(with: CachedWorkouts(days: local(uniqueDays().models), timestamp: date(2026, 9, 27, 23, 59)))
+            }
+        }
     }
 
     enum APIFailure: CaseIterable, Sendable {

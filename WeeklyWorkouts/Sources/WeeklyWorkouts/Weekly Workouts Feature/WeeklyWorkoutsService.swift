@@ -42,7 +42,7 @@ public final class WeeklyWorkoutsService {
     }
 
     public func needsLoading() async -> Bool {
-        false
+        (try? await local.load())?.isEmpty ?? false
     }
 
     public func validateCache() async throws {
