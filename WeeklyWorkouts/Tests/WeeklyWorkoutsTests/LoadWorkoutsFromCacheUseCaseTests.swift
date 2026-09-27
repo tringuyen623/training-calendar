@@ -47,12 +47,46 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         #expect(days.isEmpty)
     }
 
+    @Test func load_deliversCachedWorkoutsOnCacheSavedInCurrentWeek() async throws {
+        let now = date(2026, 10, 2, 9, 0)
+        let (sut, store) = makeSUT(currentDate: { now })
+        let days = uniqueDays()
+        store.stubRetrieval(with: CachedWorkouts(days: days, timestamp: date(2026, 9, 30, 18, 0)))
+
+        let receivedDays = try await sut.load()
+
+        #expect(receivedDays == days)
+    }
+
     // MARK: - Helpers
 
-    private func makeSUT() -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
+    private func makeSUT(
+        calendar: Calendar = makeCalendar(),
+        currentDate: @escaping () -> Date = { Date(timeIntervalSince1970: 0) }
+    ) -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
         let store = WorkoutsStoreSpy()
-        let sut = LocalWorkoutsLoader(store: store)
+        let sut = LocalWorkoutsLoader(store: store, calendar: calendar, currentDate: currentDate)
         return (sut, store)
+    }
+
+    private static func makeCalendar() -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Paris")!
+        calendar.firstWeekday = 2
+        return calendar
+    }
+
+    private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int = 0, _ minute: Int = 0, _ second: Int = 0, calendar: Calendar = makeCalendar()) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute, second: second))!
+    }
+
+    private func uniqueDays() -> [WorkoutDay] {
+        [
+            WorkoutDay(id: UUID().uuidString, day: 0, workouts: [
+                Workout(id: UUID().uuidString, title: "any title", status: .assigned, exerciseCount: 5),
+            ]),
+            WorkoutDay(id: UUID().uuidString, day: 4, workouts: []),
+        ]
     }
 
     private func anyNSError() -> NSError {
@@ -69,6 +103,10 @@ struct LoadWorkoutsFromCacheUseCaseTests {
 
         func stubEmptyCache() {
             retrievalResult = .success(nil)
+        }
+
+        func stubRetrieval(with cache: CachedWorkouts) {
+            retrievalResult = .success(cache)
         }
 
         func stubRetrieval(with error: Error) {
