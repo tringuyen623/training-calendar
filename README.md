@@ -129,6 +129,9 @@ Given a workout that is completed
 #### No connectivity – error course (sad path):
 1. System delivers connectivity error.
 
+#### Cancel course:
+1. System delivers a cancellation error.
+
 ---
 
 ### Load Workouts From Cache Use Case
