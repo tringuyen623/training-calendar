@@ -2,25 +2,31 @@ import SwiftUI
 import WeeklyWorkouts
 
 /// The week, Monday to Sunday: one row per day with a separator below it.
-/// A failed load shows a system alert over the seven days.
+/// While loading, each day shows a placeholder card; an error message shows a system alert over the days.
 public struct WeekView: View {
-    private let viewData: WeekViewData
+    private let days: [DayViewData]
+    private let isLoading: Bool
+    private let errorMessage: String?
     private let onToggle: (WorkoutCardViewData.ID) -> Void
     private let onDismissError: () -> Void
 
     public init(
-        viewData: WeekViewData,
+        days: [DayViewData],
+        isLoading: Bool,
+        errorMessage: String?,
         onToggle: @escaping (WorkoutCardViewData.ID) -> Void,
         onDismissError: @escaping () -> Void
     ) {
-        self.viewData = viewData
+        self.days = days
+        self.isLoading = isLoading
+        self.errorMessage = errorMessage
         self.onToggle = onToggle
         self.onDismissError = onDismissError
     }
 
     public var body: some View {
         ScrollView {
-            DayRowsView(days: viewData.days, isLoading: viewData.state == .loading, onToggle: onToggle)
+            DayRowsView(days: days, isLoading: isLoading, onToggle: onToggle)
         }
         .background(Palette.background.ignoresSafeArea())
         .alert("Couldn't load workouts", isPresented: isShowingError, presenting: errorMessage) { _ in
@@ -28,11 +34,6 @@ public struct WeekView: View {
         } message: { message in
             Text(message)
         }
-    }
-
-    private var errorMessage: String? {
-        guard case let .failed(message) = viewData.state else { return nil }
-        return message
     }
 
     private var isShowingError: Binding<Bool> {
@@ -56,36 +57,38 @@ struct DayRowsView: View {
 }
 
 #Preview("Design week") {
-    WeekView(viewData: WeekViewData(days: PreviewData.week, state: .loaded), onToggle: { _ in }, onDismissError: {})
+    WeekView(days: PreviewData.week, isLoading: false, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
 }
 
 #Preview("Loading") {
-    WeekView(viewData: WeekViewData(days: PreviewData.emptyWeek, state: .loading), onToggle: { _ in }, onDismissError: {})
+    WeekView(days: PreviewData.emptyWeek, isLoading: true, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
 }
 
 #Preview("Failed") {
     WeekView(
-        viewData: WeekViewData(days: PreviewData.emptyWeek, state: .failed(message: "Check your connection and try again.")),
+        days: PreviewData.emptyWeek,
+        isLoading: false,
+        errorMessage: "Check your connection and try again.",
         onToggle: { _ in },
         onDismissError: {}
     )
 }
 
 #Preview("Loaded with no workouts") {
-    WeekView(viewData: WeekViewData(days: PreviewData.emptyWeek, state: .loaded), onToggle: { _ in }, onDismissError: {})
+    WeekView(days: PreviewData.emptyWeek, isLoading: false, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
 }
 
 #Preview("320pt and 430pt widths") {
     HStack(alignment: .top, spacing: 16) {
-        WeekView(viewData: WeekViewData(days: PreviewData.week, state: .loaded), onToggle: { _ in }, onDismissError: {})
+        WeekView(days: PreviewData.week, isLoading: false, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
             .frame(width: 320)
-        WeekView(viewData: WeekViewData(days: PreviewData.week, state: .loaded), onToggle: { _ in }, onDismissError: {})
+        WeekView(days: PreviewData.week, isLoading: false, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
             .frame(width: 430)
     }
     .frame(height: 900)
 }
 
 #Preview("Large Dynamic Type") {
-    WeekView(viewData: WeekViewData(days: PreviewData.week, state: .loaded), onToggle: { _ in }, onDismissError: {})
+    WeekView(days: PreviewData.week, isLoading: false, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
         .dynamicTypeSize(.accessibility2)
 }
