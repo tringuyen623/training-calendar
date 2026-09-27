@@ -53,8 +53,8 @@ struct WeeklyWorkoutsViewModelTests {
         let mondayWorkout = makeWorkout()
         let fridayWorkout = makeWorkout()
         loader.stub(.success([
-            WorkoutDay(id: UUID().uuidString, day: 4, workouts: [fridayWorkout]),
-            WorkoutDay(id: UUID().uuidString, day: 0, workouts: [mondayWorkout]),
+            makeDay(4, with: fridayWorkout),
+            makeDay(0, with: mondayWorkout),
         ]))
 
         await sut.send(.loadWeek)
@@ -66,7 +66,7 @@ struct WeeklyWorkoutsViewModelTests {
     @Test(arguments: zip([1, 5], ["1 exercise", "5 exercises"]))
     func loadWeek_formatsExerciseCount(count: Int, expectedText: String) async {
         let (sut, loader, _) = makeSUT()
-        loader.stub(.success([WorkoutDay(id: UUID().uuidString, day: 0, workouts: [makeWorkout(exerciseCount: count)])]))
+        loader.stub(.success([makeDay(0, with: makeWorkout(exerciseCount: count))]))
 
         await sut.send(.loadWeek)
 
@@ -81,7 +81,7 @@ struct WeeklyWorkoutsViewModelTests {
     ])
     func loadWeek_formatsScheduledStatus(_ statusCase: StatusCase) async {
         let (sut, loader, _) = makeSUT()
-        loader.stub(.success([WorkoutDay(id: UUID().uuidString, day: statusCase.day, workouts: [makeWorkout(status: statusCase.status)])]))
+        loader.stub(.success([makeDay(statusCase.day, with: makeWorkout(status: statusCase.status))]))
 
         await sut.send(.loadWeek)
 
@@ -103,7 +103,7 @@ struct WeeklyWorkoutsViewModelTests {
 
     @Test func loadWeek_onFailure_showsTheSevenEmptyDaysAndErrorAndStopsLoading() async {
         let (sut, loader, _) = makeSUT()
-        loader.stub(.success([WorkoutDay(id: UUID().uuidString, day: 0, workouts: [makeWorkout()])]))
+        loader.stub(.success([makeDay(0, with: makeWorkout())]))
         await sut.send(.loadWeek)
 
         loader.stub(.failure(anyNSError()))
@@ -153,7 +153,7 @@ struct WeeklyWorkoutsViewModelTests {
         let (sut, loader, toggler) = makeSUT()
         let workout = makeWorkout(status: .completed)
 
-        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+        sut.display([makeDay(tuesday, with: workout)])
 
         #expect(sut.days[tuesday].workouts == [
             WorkoutCardViewData(id: workout.id, title: workout.title, statusText: "Completed", exerciseCount: "5 exercises", status: .completed),
@@ -166,7 +166,7 @@ struct WeeklyWorkoutsViewModelTests {
     func toggle_requestsToggleWithWorkoutsCurrentCompletion(isCompleted: Bool) async {
         let (sut, _, toggler) = makeSUT()
         let workout = makeWorkout(status: isCompleted ? .completed : .assigned)
-        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+        sut.display([makeDay(tuesday, with: workout)])
 
         await sut.send(.toggle(workoutID: workout.id))
 
@@ -177,7 +177,7 @@ struct WeeklyWorkoutsViewModelTests {
     func toggle_showsNewCompletionWhileSaving(status: Workout.Status, expectedStatus: WorkoutCardViewData.Status) async {
         let (sut, _, toggler) = makeSUT()
         let workout = makeWorkout(status: status)
-        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+        sut.display([makeDay(tuesday, with: workout)])
         toggler.stubPendingToggle()
 
         let toggling = Task { await sut.send(.toggle(workoutID: workout.id)) }
@@ -192,7 +192,7 @@ struct WeeklyWorkoutsViewModelTests {
     @Test func toggle_keepsNewCompletionWithoutErrorOnSuccess() async {
         let (sut, _, _) = makeSUT()
         let workout = makeWorkout(status: .assigned)
-        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+        sut.display([makeDay(tuesday, with: workout)])
 
         await sut.send(.toggle(workoutID: workout.id))
 
@@ -203,7 +203,7 @@ struct WeeklyWorkoutsViewModelTests {
     @Test func toggle_onFailure_revertsToPreviousCompletionAndShowsError() async {
         let (sut, _, toggler) = makeSUT()
         let workout = makeWorkout(status: .completed)
-        sut.display([WorkoutDay(id: UUID().uuidString, day: tuesday, workouts: [workout])])
+        sut.display([makeDay(tuesday, with: workout)])
         toggler.stubToggle(with: anyNSError())
 
         await sut.send(.toggle(workoutID: workout.id))
@@ -235,6 +235,10 @@ struct WeeklyWorkoutsViewModelTests {
             now: now
         )
         return (sut, loader, toggler)
+    }
+
+    private func makeDay(_ day: Int, with workout: Workout) -> WorkoutDay {
+        WorkoutDay(id: UUID().uuidString, day: day, workouts: [workout])
     }
 
     private func makeWorkout(status: Workout.Status = .assigned, exerciseCount: Int = 5) -> Workout {
