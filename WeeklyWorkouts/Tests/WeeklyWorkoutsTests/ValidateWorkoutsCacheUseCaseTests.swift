@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import WeeklyWorkouts
+@testable import WeeklyWorkouts
 
 struct ValidateWorkoutsCacheUseCaseTests {
     @Test func validateCache_failsOnRetrievalError() async {

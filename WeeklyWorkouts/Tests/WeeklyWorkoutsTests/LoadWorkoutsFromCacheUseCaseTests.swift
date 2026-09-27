@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import WeeklyWorkouts
+@testable import WeeklyWorkouts
 
 struct LoadWorkoutsFromCacheUseCaseTests {
     @Test func init_doesNotMessageStoreUponCreation() {

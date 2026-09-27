@@ -1,31 +1,31 @@
 import Foundation
 
-public final class LocalWorkoutsLoader {
+final class LocalWorkoutsLoader {
     private let store: WorkoutsStore
     private let marksStore: CompletionMarksStore
     private let calendar: Calendar
     private let currentDate: () -> Date
 
-    public init(store: WorkoutsStore, marksStore: CompletionMarksStore, calendar: Calendar, currentDate: @escaping () -> Date) {
+    init(store: WorkoutsStore, marksStore: CompletionMarksStore, calendar: Calendar, currentDate: @escaping () -> Date) {
         self.store = store
         self.marksStore = marksStore
         self.calendar = calendar
         self.currentDate = currentDate
     }
 
-    public func load() async throws -> [WorkoutDay] {
+    func load() async throws -> [WorkoutDay] {
         guard let cache = try await store.retrieve(), isFromCurrentWeek(cache) else {
             return []
         }
         return cache.days
     }
 
-    public func save(_ days: [WorkoutDay]) async throws {
+    func save(_ days: [WorkoutDay]) async throws {
         try await store.deleteCachedWorkouts()
         try await store.insert(days, timestamp: currentDate())
     }
 
-    public func validateCache() async throws {
+    func validateCache() async throws {
         if try await hasExpiredCache() {
             try await deleteExpiredCache()
         }
