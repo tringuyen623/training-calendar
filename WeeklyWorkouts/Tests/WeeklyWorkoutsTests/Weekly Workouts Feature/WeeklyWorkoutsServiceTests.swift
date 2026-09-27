@@ -304,6 +304,13 @@ struct WeeklyWorkoutsServiceTests {
         #expect(await sut.needsLoading() == true)
     }
 
+    @Test func needsLoading_onCacheRetrievalError_isTrue() async {
+        let (sut, _, store) = makeSUT()
+        store.stubRetrieval(with: anyNSError())
+
+        #expect(await sut.needsLoading() == true)
+    }
+
     // MARK: - Cache validation
 
     @Test func validateCache_deletesMarksThenCachedWorkoutsOnExpiredCache() async throws {
