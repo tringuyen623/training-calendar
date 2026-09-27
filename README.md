@@ -17,12 +17,15 @@ Coming soon: the link will be added here.
 
 **Run the tests**
 
-The feature logic has no UI dependency, so its tests run on macOS without a simulator:
+The feature logic has no UI dependency, so its tests run on macOS without a simulator. Either:
 
-```sh
-cd WeeklyWorkouts
-swift test
-```
+- **Xcode:** open `WeeklyWorkouts/Package.swift`, select the `WeeklyWorkouts-Package` scheme with **My Mac** (or any iPhone simulator) as the destination, and press ⌘U.
+- **Terminal:**
+
+  ```sh
+  cd WeeklyWorkouts
+  swift test
+  ```
 
 **Project layout**
 - `WeeklyWorkouts/` — Swift package: the `WeeklyWorkouts` target (models, API, cache, rules, ViewModel) and the `WeeklyWorkoutsUI` target (SwiftUI views).
