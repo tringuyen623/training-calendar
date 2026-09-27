@@ -22,7 +22,7 @@ Don't add behavior that isn't there. If something is unclear or conflicts, stop 
 - Inject dependencies through initializers. No singletons.
 - Treat time as a dependency: inject the current date and the calendar (with its time zone), so week boundaries are testable. Never use `Date()` or `Calendar.current` inside logic.
 - Don't add a layer or protocol unless it removes real coupling.
-- Loaders return once (`async throws`). Remote and local loaders conform to the same loader protocol. A decorator around the remote loader saves a successful result to the cache only when it differs from the cached one. The screen shows the cached week first; a changed remote result is delivered to the ViewModel through the composition root. Every remote load calls the server; `URLSession`'s cache behavior is configured in the composition root, not hard-coded in the HTTP client.
+- Loaders return once (`async throws`). Remote and local loaders conform to the same loader protocol. A successful remote load always replaces the cache; no comparison. The cache store protocol notifies when the stored data changes (how is up to each implementation — SwiftData, file, in-memory). The screen shows the cached week first; the composition root listens to store changes, reads the local week again and delivers it to the ViewModel. Every remote load calls the server; `URLSession`'s cache behavior is configured in the composition root, not hard-coded in the HTTP client.
 
 ## Language & concurrency
 
