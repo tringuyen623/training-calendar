@@ -23,6 +23,17 @@ struct ValidateWorkoutsCacheUseCaseTests {
         #expect(marksStore.receivedMessages.isEmpty)
     }
 
+    @Test func validateCache_hasNoSideEffectsOnNonExpiredCache() async throws {
+        let now = date(2026, 9, 30, 12, 0)
+        let (sut, store, marksStore) = makeSUT(currentDate: { now })
+        store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 29, 9, 0)))
+
+        try await sut.validateCache()
+
+        #expect(store.receivedMessages == [.retrieve])
+        #expect(marksStore.receivedMessages.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
