@@ -56,6 +56,30 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         }
     }
 
+    @Test(arguments: ["_id", "day", "assignments"])
+    func load_deliversInvalidDataErrorOn200HTTPResponseWithDayMissingField(field: String) async {
+        let (sut, client) = makeSUT()
+        var day = makeDayJSON(workouts: [makeWorkoutJSON()])
+        day[field] = nil
+        client.result = .success((makeJSON(days: [day]), HTTPURLResponse(statusCode: 200)))
+
+        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
+            try await sut.load()
+        }
+    }
+
+    @Test(arguments: ["_id", "title", "status", "total_exercise"])
+    func load_deliversInvalidDataErrorOn200HTTPResponseWithWorkoutMissingField(field: String) async {
+        let (sut, client) = makeSUT()
+        var workout = makeWorkoutJSON()
+        workout[field] = nil
+        client.result = .success((makeJSON(days: [makeDayJSON(workouts: [workout])]), HTTPURLResponse(statusCode: 200)))
+
+        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
+            try await sut.load()
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (sut: RemoteWorkoutsLoader, client: HTTPClientSpy) {
@@ -66,6 +90,14 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
 
     private func makeJSON(days: [[String: Any]]) -> Data {
         try! JSONSerialization.data(withJSONObject: ["data": days])
+    }
+
+    private func makeDayJSON(id: String = "any-day-id", day: Int = 0, workouts: [[String: Any]] = []) -> [String: Any] {
+        ["_id": id, "day": day, "assignments": workouts]
+    }
+
+    private func makeWorkoutJSON(id: String = "any-workout-id", title: String = "any title", status: Int = 0, exerciseCount: Int = 1) -> [String: Any] {
+        ["_id": id, "title": title, "status": status, "total_exercise": exerciseCount]
     }
 
     private func anyNSError() -> NSError {
