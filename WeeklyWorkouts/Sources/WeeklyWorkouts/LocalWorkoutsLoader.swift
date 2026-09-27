@@ -29,6 +29,8 @@ public final class LocalWorkoutsLoader: WorkoutsLoader {
         let cache: CachedWorkouts?
         do {
             cache = try await store.retrieve()
+        } catch let error as CancellationError {
+            throw error
         } catch {
             try await store.deleteCachedWorkouts()
             return
