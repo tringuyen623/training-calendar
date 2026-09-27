@@ -18,6 +18,16 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         #expect(client.requestedURLs == [url])
     }
 
+    @Test func loadTwice_requestsDataFromURLTwice() async {
+        let url = URL(string: "https://a-given-url.com")!
+        let (sut, client) = makeSUT(url: url)
+
+        _ = try? await sut.load()
+        _ = try? await sut.load()
+
+        #expect(client.requestedURLs == [url, url])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (sut: RemoteWorkoutsLoader, client: HTTPClientSpy) {
