@@ -20,8 +20,9 @@ public final class URLSessionHTTPClient: HTTPClient {
     private func load(from url: URL) async throws -> (Data, URLResponse) {
         do {
             return try await session.data(from: url)
-        } catch let error as URLError where error.code == .cancelled {
-            throw CancellationError()
+        } catch {
+            try Task.checkCancellation()
+            throw error
         }
     }
 }

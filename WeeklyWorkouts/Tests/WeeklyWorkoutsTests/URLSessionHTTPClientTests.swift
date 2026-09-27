@@ -85,6 +85,20 @@ struct URLSessionHTTPClientTests {
         }
     }
 
+    @Test func get_rethrowsCancelledURLErrorWhenTaskIsNotCancelled() async {
+        let sut = makeSUT()
+        URLProtocolStub.stub(error: URLError(.cancelled))
+
+        do {
+            _ = try await sut.get(from: anyURL())
+            Issue.record("Expected an error, got a result instead")
+        } catch let error as URLError {
+            #expect(error.code == .cancelled)
+        } catch {
+            Issue.record("Expected URLError(.cancelled), got \(error) instead")
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> URLSessionHTTPClient {
