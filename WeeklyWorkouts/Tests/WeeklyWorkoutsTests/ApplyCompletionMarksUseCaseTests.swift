@@ -93,7 +93,7 @@ struct ApplyCompletionMarksUseCaseTests {
     }
 
     private func makeWorkout(status: Workout.Status) -> Workout {
-        Workout(id: UUID().uuidString, title: "any title", status: status, exerciseCount: 5)
+        Workout(id: UUID().uuidString, title: UUID().uuidString, status: status, exerciseCount: Int.random(in: 1...20))
     }
 
     private func makeWeek(_ workouts: [Workout]) -> [WorkoutDay] {
