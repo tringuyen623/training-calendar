@@ -47,6 +47,7 @@ struct WeeklyWorkoutsServiceTests {
         let (sut, client, _) = makeSUT(url: url)
 
         _ = try? await sut.loadWeek()
+        await sut.refreshTask?.value
 
         #expect(client.requestedURLs == [url])
     }
