@@ -52,6 +52,19 @@ struct WeeklyWorkoutsServiceTests {
         await completePendingRefresh(of: sut, on: client)
     }
 
+    @Test func loadWeek_onCachedWeek_replacesCacheWithRawServerWeekOnSuccessfulRefresh() async {
+        let (sut, client, store) = makeSUT()
+        let serverWeek = makeServerWeek()
+        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
+        store.stubMarksRetrieval(with: ["assigned-id": true])
+        client.stub(statusCode: 200, data: serverWeek.json)
+
+        _ = try? await sut.loadWeek()
+        await sut.refreshTask?.value
+
+        #expect(store.insertedCaches == [CachedWorkouts(days: serverWeek.days, timestamp: now)])
+    }
+
     // MARK: - No cached week
 
     @Test func loadWeek_onEmptyCache_requestsDataFromURLOnce() async {
