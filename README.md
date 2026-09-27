@@ -280,30 +280,17 @@ Given a workout that is completed
 
 ```mermaid
 flowchart TD
-    Open([Open the calendar]) --> Week[Display the seven days of the current week]
-    Week --> Cache[Load workouts from cache]
-    Cache --> HasCache{Cached week?<br/>saved this week, not empty, readable}
-    HasCache -- yes --> MarkCache[Apply completion marks] --> ShowCache[Display the cached week]
+    Open([Open the calendar]) --> Cache[Load workouts from cache]
+    Cache --> HasCache{Cached week?}
+    HasCache -- yes --> ShowCache[Display the cached week]
     ShowCache --> Refresh[Refresh from remote in the background]
     Refresh --> RefreshOk{Loaded?}
-    RefreshOk -- no --> Keep[Keep displaying the cached week, no error]
-    RefreshOk -- yes --> Replace[Replace the cache with the server week]
-    Replace --> Notify[Cache notifies the change] --> Reload[Reload the cached week<br/>and apply completion marks] --> Update[Display the new workouts]
-    HasCache -- no --> Loading[Display loading placeholders] --> Remote[Load from remote]
+    RefreshOk -- no --> Keep[Keep displaying the cached week]
+    RefreshOk -- yes --> Replace[Replace the cache] --> Notify[Cache notifies the change] --> Update[Display the new workouts]
+    HasCache -- no --> Remote[Load from remote]
     Remote --> RemoteOk{Loaded?}
-    RemoteOk -- no --> Error[Display an error alert over the empty week]
-    RemoteOk -- yes --> Save[Replace the cache with the server week] --> MarkRemote[Apply completion marks] --> ShowRemote[Display the workouts]
-```
-
-```mermaid
-flowchart TD
-    Tap([Tap a workout]) --> Flip[Display the inverted completion]
-    Flip --> SaveMark[Save the completion mark]
-    SaveMark -- saved --> Done[Keep the new completion]
-    SaveMark -- failed --> Revert[Revert the workout and display an error alert]
-    Leave([App leaves the foreground]) --> Validate[Validate the cache]
-    Validate -- from a previous week --> Delete[Delete the completion marks, then the cached workouts]
-    Validate -- this week, empty or unreadable --> Nothing[Keep the cache]
+    RemoteOk -- no --> Error[Display an error]
+    RemoteOk -- yes --> Save[Replace the cache] --> Show[Display the workouts]
 ```
 
 ## Model Specs
@@ -390,64 +377,16 @@ The brief and the mock API leave a few points open. These are the decisions take
 
 ```mermaid
 graph TD
-    App["TrainingCalendar app<br/>composition root: creates everything,<br/>forwards store changes to the ViewModel"] --> UI
-    App --> Presentation
-    App --> Feature
-    App --> CacheInfra
-    App --> APIInfra
-
-    subgraph UITarget["WeeklyWorkoutsUI"]
-        UI["SwiftUI views<br/>design system"]
-    end
-
-    subgraph Package["WeeklyWorkouts"]
-        subgraph Presentation["Presentation"]
-            ViewModel["Weekly workouts ViewModel<br/>formats the week for display"]
-            ViewData["View data<br/>display-ready text and status"]
-        end
-        subgraph Feature["Feature"]
-            Service["Weekly workouts service<br/>cached week first, refreshed from the API,<br/>completion marks applied on the way out"]
-            Toggler["Workout completion toggler"]
-            Schedule["Week schedule<br/>current week, displayed status"]
-            Models["Weekly workouts models"]
-        end
-        subgraph API["API"]
-            Client["HTTP client<br/>protocol"]
-            Mapper["Workout days mapper"]
-            subgraph APIInfra["Infrastructure"]
-                URLSession["URLSession HTTP client"]
-            end
-        end
-        subgraph Cache["Cache"]
-            Local["Local workouts loader<br/>week validity, domain ↔ local models"]
-            Store["Workouts store<br/>protocol, local models, notifies changes"]
-            Marks["Completion marks store<br/>protocol"]
-            subgraph CacheInfra["Infrastructure"]
-                SwiftData["SwiftData workouts store<br/>cached workouts and completion marks<br/>as separate models"]
-            end
-        end
-    end
-
-    UI --> ViewData
-    ViewModel --> ViewData
-    ViewModel --> Service
-    ViewModel --> Toggler
-    ViewModel --> Schedule
-    Schedule --> Models
-    Service --> Client
-    Service --> Mapper
-    Service --> Local
-    Service --> Marks
-    Service --> Models
-    Toggler --> Marks
-    Local --> Store
-    Local --> Marks
-    URLSession -. conforms to .-> Client
-    SwiftData -. conforms to .-> Store
-    SwiftData -. conforms to .-> Marks
+    App["TrainingCalendar app<br/>composition root"] --> UI["SwiftUI views"]
+    UI --> ViewModel["ViewModel"]
+    ViewModel --> Service["Weekly workouts service"]
+    Service --> Client["HTTP client<br/>protocol"]
+    Service --> Store["Store<br/>protocol"]
+    URLSession["URLSession client"] -. conforms to .-> Client
+    SwiftData["SwiftData store"] -. conforms to .-> Store
 ```
 
-Solid arrows mean "depends on"; dotted arrows mean "conforms to". Folders in the package follow the same groups: `Weekly Workouts Feature`, `Weekly Workouts API`, `Weekly Workouts Cache` and `Weekly Workouts Presentation`, with each concrete adapter in an `Infrastructure` folder inside its capability.
+Solid arrows mean "depends on"; dotted arrows mean "conforms to". The composition root creates every concrete type and wires them together; the service and the ViewModel only know the protocols.
 
 ## AI Collaboration
 
