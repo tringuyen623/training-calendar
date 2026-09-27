@@ -235,7 +235,7 @@ struct SwiftDataWorkoutsStoreTests {
     }
 }
 
-/// Stands for any other model sharing the container, such as the completion marks.
+/// Stands for any other model sharing the container, such as another feature's data.
 @Model
 private final class OtherModel {
     var createdAt = Date(timeIntervalSince1970: 0)
