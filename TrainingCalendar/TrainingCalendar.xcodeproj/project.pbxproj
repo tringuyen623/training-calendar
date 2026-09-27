@@ -8,6 +8,7 @@
 
 /* Begin PBXFileReference section */
 		F42141C830681FEE008CE264 /* TrainingCalendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrainingCalendar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F42142303068CB10008CE264 /* WeeklyWorkouts */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = WeeklyWorkouts; path = ../WeeklyWorkouts; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -30,6 +31,7 @@
 		F42141BF30681FEE008CE264 = {
 			isa = PBXGroup;
 			children = (
+				F42142303068CB10008CE264 /* WeeklyWorkouts */,
 				F42141CA30681FEE008CE264 /* TrainingCalendar */,
 				F42141C930681FEE008CE264 /* Products */,
 			);
