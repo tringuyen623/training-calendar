@@ -35,11 +35,18 @@ public final class WeeklyWorkoutsService {
         return applying(marks, to: days)
     }
 
+    // Generated with Claude. Adjusted to handle a "not completed" mark on a workout the server reports as completed.
+    // Marks are looked up by workout ID, so marks for workouts not in the week are never used.
     private func applying(_ marks: [String: Bool], to days: [WorkoutDay]) -> [WorkoutDay] {
         days.map { day in
             WorkoutDay(id: day.id, day: day.day, workouts: day.workouts.map { workout in
-                guard marks[workout.id] == true else { return workout }
-                return Workout(id: workout.id, title: workout.title, status: .completed, exerciseCount: workout.exerciseCount)
+                guard let isCompleted = marks[workout.id] else { return workout }
+                return Workout(
+                    id: workout.id,
+                    title: workout.title,
+                    status: isCompleted ? .completed : .assigned,
+                    exerciseCount: workout.exerciseCount
+                )
             })
         }
     }

@@ -97,6 +97,18 @@ struct WeeklyWorkoutsServiceTests {
         #expect(days == makeWeek([assigned, missed.with(status: .completed)]))
     }
 
+    @Test func loadCachedWeek_uncompletesCompletedWorkoutWithNotCompletedMark() async throws {
+        let (sut, _, store) = makeSUT()
+        let assigned = makeWorkout(status: .assigned)
+        let completed = makeWorkout(status: .completed)
+        store.stubRetrieval(with: validCache(makeWeek([assigned, completed])))
+        store.stubMarksRetrieval(with: [completed.id: false])
+
+        let days = try await sut.loadCachedWeek()
+
+        #expect(days == makeWeek([assigned, completed.with(status: .assigned)]))
+    }
+
     // MARK: - Helpers
 
     private func validCache(_ days: [WorkoutDay]) -> CachedWorkouts {
