@@ -21,7 +21,6 @@ final class WeeklyWorkoutsComposer {
         self.service = service
         self.viewModel = WeeklyWorkoutsViewModel(
             service: service,
-            toggler: WorkoutCompletionToggler(marksStore: store),
             calendar: calendar,
             now: Date.init
         )

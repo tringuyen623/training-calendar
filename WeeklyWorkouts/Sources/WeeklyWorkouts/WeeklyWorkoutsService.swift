@@ -2,7 +2,9 @@ import Foundation
 
 public typealias WeeklyWorkoutsStore = WorkoutsStore & CompletionMarksStore
 
-/// Loads the week screen's workouts: the cached week first, refreshed from the API, with the local completion marks applied on the way out.
+/// The week screen's use cases, one extension each: loading the week (the cached week first, refreshed from the API,
+/// with the local completion marks applied on the way out), reloading the cached week, validating the cache
+/// and toggling a workout's completion.
 @MainActor
 public final class WeeklyWorkoutsService {
     private let url: URL
@@ -23,7 +25,11 @@ public final class WeeklyWorkoutsService {
         self.store = store
         self.local = LocalWorkoutsLoader(store: store, marksStore: store, calendar: calendar, currentDate: currentDate)
     }
+}
 
+// MARK: - Load Weekly Workouts Use Case
+
+extension WeeklyWorkoutsService {
     public func loadWeek() async throws -> [WorkoutDay] {
         let cached = await cachedWeek()
         guard cached.isEmpty else {
@@ -36,18 +42,10 @@ public final class WeeklyWorkoutsService {
         return try await applyingMarks(to: refresh())
     }
 
-    public func loadCachedWeek() async throws -> [WorkoutDay] {
-        try await applyingMarks(to: local.load())
-    }
-
     /// Whether the week must be loaded: there's no cached week for the current week, so `loadWeek()` would wait for the API.
     /// Only reads the cache, so asking never requests the API or writes.
     public func needsLoading() async -> Bool {
         await cachedWeek().isEmpty
-    }
-
-    public func validateCache() async throws {
-        try await local.validateCache()
     }
 
     /// The cached week of the current week, or no days when there's none.
@@ -85,22 +83,33 @@ public final class WeeklyWorkoutsService {
 
     /// Marks are applied only on the way out, so they never reach the cache.
     private func applyingMarks(to days: [WorkoutDay]) async throws -> [WorkoutDay] {
-        applying(try await store.retrieveAllMarks(), to: days)
+        days.applying(try await store.retrieveAllMarks())
     }
+}
 
-    // Generated with Claude. Adjusted to handle a "not completed" mark on a workout the server reports as completed.
-    // Marks are looked up by workout ID, so marks for workouts not in the week are never used.
-    private func applying(_ marks: [String: Bool], to days: [WorkoutDay]) -> [WorkoutDay] {
-        days.map { day in
-            WorkoutDay(id: day.id, day: day.day, workouts: day.workouts.map { workout in
-                guard let isCompleted = marks[workout.id] else { return workout }
-                return Workout(
-                    id: workout.id,
-                    title: workout.title,
-                    status: isCompleted ? .completed : .assigned,
-                    exerciseCount: workout.exerciseCount
-                )
-            })
-        }
+// MARK: - Reload Cached Weekly Workouts Use Case
+
+extension WeeklyWorkoutsService {
+    public func loadCachedWeek() async throws -> [WorkoutDay] {
+        try await applyingMarks(to: local.load())
+    }
+}
+
+// MARK: - Validate Workouts Cache Use Case
+
+extension WeeklyWorkoutsService {
+    public func validateCache() async throws {
+        try await local.validateCache()
+    }
+}
+
+// MARK: - Toggle Workout Completion Use Case
+
+extension WeeklyWorkoutsService {
+    /// Saves the inverted completion as the workout's mark and delivers it.
+    public func toggle(workoutID: String, isCompleted: Bool) async throws -> Bool {
+        let newCompletion = !isCompleted
+        try await store.insertMark(newCompletion, for: workoutID)
+        return newCompletion
     }
 }

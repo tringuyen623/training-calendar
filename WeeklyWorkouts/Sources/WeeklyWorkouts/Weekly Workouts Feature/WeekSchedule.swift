@@ -46,7 +46,7 @@ public enum WeekSchedule {
     }
 
     private static func status(of workout: Workout, on date: Date, today: Date) -> ScheduledWorkout.Status {
-        if workout.status == .completed { return .completed }
+        if workout.isCompleted { return .completed }
         if date < today { return .missed }
         if date > today { return .upcoming }
         return .assigned

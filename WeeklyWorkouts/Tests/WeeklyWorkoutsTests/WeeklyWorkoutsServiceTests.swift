@@ -13,7 +13,7 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.receivedMessages.isEmpty)
     }
 
-    // MARK: - Cached week
+    // MARK: - Load Weekly Workouts Use Case: cached week
 
     @Test func loadWeek_onCachedWeek_deliversItWithMarksAppliedWithoutWaitingForTheAPI() async throws {
         let (sut, client, store) = makeSUT()
@@ -93,7 +93,7 @@ struct WeeklyWorkoutsServiceTests {
         #expect(client.requestedURLs.isEmpty)
     }
 
-    // MARK: - No cached week
+    // MARK: - Load Weekly Workouts Use Case: no cached week
 
     @Test func loadWeek_onEmptyCache_requestsDataFromURLOnce() async {
         let url = URL(string: "https://a-given-url.com")!
@@ -198,7 +198,7 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.insertedCaches == [CachedWorkouts(days: local(serverWeek.days), timestamp: now)])
     }
 
-    // MARK: - Unreadable cache
+    // MARK: - Load Weekly Workouts Use Case: unreadable cache
 
     @Test func loadWeek_onCacheRetrievalError_deliversServerWeekAndReplacesCache() async throws {
         let (sut, client, store) = makeSUT()
@@ -212,7 +212,45 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.insertedCaches == [CachedWorkouts(days: local(serverWeek.days), timestamp: now)])
     }
 
-    // MARK: - Cached week reloaded after a store change
+    // MARK: - Load Weekly Workouts Use Case: needs loading
+
+    @Test func needsLoading_onCachedWeek_isFalse() async {
+        let (sut, _, store) = makeSUT()
+        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
+
+        #expect(await sut.needsLoading() == false)
+    }
+
+    @Test(arguments: [CacheState.emptyCache, .cacheFromPreviousWeek])
+    func needsLoading_withoutCachedWeek_isTrue(_ state: CacheState) async {
+        let (sut, _, store) = makeSUT()
+        state.stub(on: store)
+
+        #expect(await sut.needsLoading() == true)
+    }
+
+    @Test func needsLoading_onCacheRetrievalError_isTrue() async {
+        let (sut, _, store) = makeSUT()
+        store.stubRetrieval(with: anyNSError())
+
+        #expect(await sut.needsLoading() == true)
+    }
+
+    @Test(arguments: CacheState.allCases)
+    func needsLoading_onlyReadsTheCache(_ state: CacheState) async {
+        let (sut, client, store) = makeSUT()
+        state.stub(on: store)
+        client.stub(statusCode: 200, data: makeServerWeek().json)
+
+        _ = await sut.needsLoading()
+        await sut.refreshTask?.value
+
+        #expect(store.receivedMessages == [.retrieve])
+        #expect(client.requestedURLs.isEmpty)
+        #expect(sut.refreshTask == nil)
+    }
+
+    // MARK: - Reload Cached Weekly Workouts Use Case
 
     @Test func loadCachedWeek_completesNotCompletedWorkoutWithCompletedMark() async throws {
         let (sut, _, store) = makeSUT()
@@ -287,45 +325,7 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.writes.isEmpty)
     }
 
-    // MARK: - Needs loading
-
-    @Test func needsLoading_onCachedWeek_isFalse() async {
-        let (sut, _, store) = makeSUT()
-        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
-
-        #expect(await sut.needsLoading() == false)
-    }
-
-    @Test(arguments: [CacheState.emptyCache, .cacheFromPreviousWeek])
-    func needsLoading_withoutCachedWeek_isTrue(_ state: CacheState) async {
-        let (sut, _, store) = makeSUT()
-        state.stub(on: store)
-
-        #expect(await sut.needsLoading() == true)
-    }
-
-    @Test func needsLoading_onCacheRetrievalError_isTrue() async {
-        let (sut, _, store) = makeSUT()
-        store.stubRetrieval(with: anyNSError())
-
-        #expect(await sut.needsLoading() == true)
-    }
-
-    @Test(arguments: CacheState.allCases)
-    func needsLoading_onlyReadsTheCache(_ state: CacheState) async {
-        let (sut, client, store) = makeSUT()
-        state.stub(on: store)
-        client.stub(statusCode: 200, data: makeServerWeek().json)
-
-        _ = await sut.needsLoading()
-        await sut.refreshTask?.value
-
-        #expect(store.receivedMessages == [.retrieve])
-        #expect(client.requestedURLs.isEmpty)
-        #expect(sut.refreshTask == nil)
-    }
-
-    // MARK: - Cache validation
+    // MARK: - Validate Workouts Cache Use Case
 
     @Test func validateCache_deletesMarksThenCachedWorkoutsOnExpiredCache() async throws {
         let (sut, _, store) = makeSUT()
@@ -334,6 +334,49 @@ struct WeeklyWorkoutsServiceTests {
         try await sut.validateCache()
 
         #expect(store.receivedMessages == [.retrieve, .deleteAllMarks, .deleteCachedWorkouts])
+    }
+
+    // MARK: - Toggle Workout Completion Use Case
+
+    @Test(arguments: [true, false])
+    func toggle_requestsMarkInsertionWithInvertedCompletionForWorkout(isCompleted: Bool) async {
+        let (sut, _, store) = makeSUT()
+        let workoutID = UUID().uuidString
+
+        _ = try? await sut.toggle(workoutID: workoutID, isCompleted: isCompleted)
+
+        #expect(store.receivedMessages == [.insertMark(!isCompleted, workoutID)])
+    }
+
+    @Test(arguments: [true, false])
+    func toggle_deliversNewCompletionOnSuccessfulInsertion(isCompleted: Bool) async throws {
+        let (sut, _, _) = makeSUT()
+
+        let newCompletion = try await sut.toggle(workoutID: UUID().uuidString, isCompleted: isCompleted)
+
+        #expect(newCompletion == !isCompleted)
+    }
+
+    @Test func toggle_failsOnInsertionError() async {
+        let (sut, _, store) = makeSUT()
+        let insertionError = anyNSError()
+        store.stubMarkInsertion(with: insertionError)
+
+        await #expect {
+            try await sut.toggle(workoutID: UUID().uuidString, isCompleted: false)
+        } throws: { error in
+            error as NSError == insertionError
+        }
+    }
+
+    @Test func toggle_hasNoSideEffectsBeyondInsertionOnInsertionError() async {
+        let (sut, _, store) = makeSUT()
+        let workoutID = UUID().uuidString
+        store.stubMarkInsertion(with: anyNSError())
+
+        _ = try? await sut.toggle(workoutID: workoutID, isCompleted: false)
+
+        #expect(store.receivedMessages == [.insertMark(true, workoutID)])
     }
 
     // MARK: - Helpers

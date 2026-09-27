@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// The week screen's state: always the seven days of the current week, with the delivered workouts placed into them.
-/// It only formats what `WeekSchedule` derives; it loads through the injected service and saves completions through the injected toggler.
+/// It only formats what `WeekSchedule` derives; it loads and saves completions through the injected service.
 @MainActor
 @Observable
 public final class WeeklyWorkoutsViewModel {
@@ -20,18 +20,15 @@ public final class WeeklyWorkoutsViewModel {
     @ObservationIgnored private var workoutDays: [WorkoutDay] = []
 
     private let service: WeeklyWorkoutsService
-    private let toggler: WorkoutCompletionToggler
     private let calendar: Calendar
     private let now: () -> Date
 
     public init(
         service: WeeklyWorkoutsService,
-        toggler: WorkoutCompletionToggler,
         calendar: Calendar,
         now: @escaping () -> Date
     ) {
         self.service = service
-        self.toggler = toggler
         self.calendar = calendar
         self.now = now
         show([])
@@ -69,28 +66,14 @@ public final class WeeklyWorkoutsViewModel {
 
     private func toggle(_ workoutID: String) async {
         guard let workout = workoutDays.lazy.flatMap(\.workouts).first(where: { $0.id == workoutID }) else { return }
-        let isCompleted = workout.status == .completed
-        show(settingCompletion(!isCompleted, ofWorkout: workoutID, in: workoutDays))
+        let isCompleted = workout.isCompleted
+        let newCompletion = !isCompleted
+        show(workoutDays.applying([workoutID: newCompletion]))
         do {
-            _ = try await toggler.toggle(workoutID: workoutID, isCompleted: isCompleted)
+            _ = try await service.toggle(workoutID: workoutID, isCompleted: isCompleted)
         } catch {
-            show(settingCompletion(isCompleted, ofWorkout: workoutID, in: workoutDays))
+            show(workoutDays.applying([workoutID: isCompleted]))
             errorMessage = "Couldn't save your change"
-        }
-    }
-
-    // Mirrors a completion mark: completed, or not completed so that the week rules derive missed, assigned or upcoming.
-    private func settingCompletion(_ isCompleted: Bool, ofWorkout workoutID: String, in workoutDays: [WorkoutDay]) -> [WorkoutDay] {
-        workoutDays.map { day in
-            WorkoutDay(id: day.id, day: day.day, workouts: day.workouts.map { workout in
-                guard workout.id == workoutID else { return workout }
-                return Workout(
-                    id: workout.id,
-                    title: workout.title,
-                    status: isCompleted ? .completed : .assigned,
-                    exerciseCount: workout.exerciseCount
-                )
-            })
         }
     }
 
