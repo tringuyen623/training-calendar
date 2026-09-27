@@ -1,6 +1,6 @@
 import Foundation
 
-public final class LocalWorkoutsLoader: WorkoutsLoader {
+public final class LocalWorkoutsLoader {
     private let store: WorkoutsStore
     private let marksStore: CompletionMarksStore
     private let calendar: Calendar
