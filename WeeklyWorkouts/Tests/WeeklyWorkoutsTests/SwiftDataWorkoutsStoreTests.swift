@@ -149,6 +149,16 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(marks == ["workout-a": true, "workout-b": false])
     }
 
+    @Test func insertMark_replacesPreviousMarkForTheSameWorkoutID() async throws {
+        let sut = try makeSUT()
+        try await sut.insertMark(true, for: "workout-a")
+
+        try await sut.insertMark(false, for: "workout-a")
+        let marks = try await sut.retrieveAllMarks()
+
+        #expect(marks == ["workout-a": false])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {

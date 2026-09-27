@@ -47,6 +47,7 @@ extension SwiftDataWorkoutsStore: CompletionMarksStore {
 
     public func insertMark(_ isCompleted: Bool, for workoutID: String) async throws {
         try saveOrRollback {
+            try modelContext.delete(model: ManagedCompletionMark.self, where: #Predicate { $0.workoutID == workoutID })
             modelContext.insert(ManagedCompletionMark(workoutID: workoutID, isCompleted: isCompleted))
         }
     }
