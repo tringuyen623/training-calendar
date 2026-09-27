@@ -28,8 +28,7 @@ Given the customer has connectivity
  When the customer opens the Training Calendar
  Then the app should display the cached workouts
   And fetch the latest workouts from remote
-  And update the displayed workouts when remote data differs
-  And replace the cache with the new workouts
+  And when the remote data differs, replace the cache and update the displayed workouts
 ```
 
 ### Narrative #2
@@ -203,23 +202,23 @@ Given a workout that is completed
 1. System keeps the previous mark.
 2. System delivers error.
 
----
+## Flowchart
 
-### Load Weekly Workouts Use Case (cache first, then remote)
-
-#### Primary course (happy path):
-1. Execute "Load Weekly Workouts" command.
-2. System loads workouts from cache (Load Workouts From Cache).
-3. System applies local completion marks (a local mark wins over the server status) and delivers the cached workouts.
-4. System loads workouts from remote (Load Workouts From Remote).
-5. System caches the new workouts (Cache Workouts).
-6. System applies local completion marks and delivers the new workouts only if they differ from the delivered ones.
-
-#### Remote error after cached delivery course (sad path):
-1. System finishes without error.
-
-#### Remote error with nothing delivered course (sad path):
-1. System delivers error.
+```mermaid
+flowchart TD
+    Open([Open the calendar]) --> Cache[Load workouts from cache]
+    Cache --> HasCache{Valid cache?}
+    HasCache -- yes --> ShowCache[Display cached workouts]
+    HasCache -- no --> ShowEmpty[Display the empty week while loading]
+    ShowCache --> Remote[Load workouts from remote]
+    ShowEmpty --> Remote
+    Remote --> Ok{Loaded?}
+    Ok -- no, nothing shown --> Error[Display an error message]
+    Ok -- no, cache shown --> Keep[Keep displaying the cache]
+    Ok -- yes --> Differs{Differs from the cache?}
+    Differs -- no --> Keep
+    Differs -- yes --> Save[Replace the cache] --> Update[Update the displayed workouts]
+```
 
 ## Model Specs
 
@@ -302,11 +301,8 @@ graph TD
     App --> Package
     UI --> Package
     subgraph Package["WeeklyWorkouts"]
-        Weekly["Cache-then-remote loader"] -. conforms to .-> Loader["Workouts loader<br/>protocol"]
-        Weekly -- has --> Remote["Remote workouts loader<br/>API"]
-        Weekly -- has --> Local["Local workouts loader<br/>cache"]
-        Remote -. conforms to .-> Loader
-        Local -. conforms to .-> Loader
+        Remote["Remote workouts loader<br/>API"] -. conforms to .-> Loader["Workouts loader<br/>protocol"]
+        Local["Local workouts loader<br/>cache"] -. conforms to .-> Loader
         Loader --> Models["Weekly workouts<br/>models"]
     end
 ```
