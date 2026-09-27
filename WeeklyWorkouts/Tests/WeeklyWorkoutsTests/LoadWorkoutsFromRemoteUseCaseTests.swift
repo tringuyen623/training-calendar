@@ -110,6 +110,34 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         #expect(days.isEmpty)
     }
 
+    @Test func load_deliversMappedDaysOn200HTTPResponseWithJSONDays() async throws {
+        let (sut, client) = makeSUT()
+        let json = makeJSON(days: [
+            makeDayJSON(id: "day-3", day: 3, workouts: [
+                makeWorkoutJSON(id: "w-completed", title: "Legs day", status: 2, exerciseCount: 5),
+            ]),
+            makeDayJSON(id: "day-0", day: 0, workouts: [
+                makeWorkoutJSON(id: "w-assigned", title: "Full warm up workout", status: 0, exerciseCount: 6),
+                makeWorkoutJSON(id: "w-missed", title: "HIIT Tabata 20:10 8x8", status: 1, exerciseCount: 15),
+            ]),
+            makeDayJSON(id: "day-5", day: 5, workouts: []),
+        ])
+        client.result = .success((json, HTTPURLResponse(statusCode: 200)))
+
+        let days = try await sut.load()
+
+        #expect(days == [
+            WorkoutDay(id: "day-3", day: 3, workouts: [
+                Workout(id: "w-completed", title: "Legs day", status: .completed, exerciseCount: 5),
+            ]),
+            WorkoutDay(id: "day-0", day: 0, workouts: [
+                Workout(id: "w-assigned", title: "Full warm up workout", status: .assigned, exerciseCount: 6),
+                Workout(id: "w-missed", title: "HIIT Tabata 20:10 8x8", status: .missed, exerciseCount: 15),
+            ]),
+            WorkoutDay(id: "day-5", day: 5, workouts: []),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (sut: RemoteWorkoutsLoader, client: HTTPClientSpy) {
