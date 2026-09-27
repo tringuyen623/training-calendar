@@ -15,16 +15,17 @@ public final class RemoteWorkoutsLoader {
     }
 
     public func load() async throws -> [WorkoutDay] {
-        let response: HTTPURLResponse
+        let (data, response): (Data, HTTPURLResponse)
         do {
-            (_, response) = try await client.get(from: url)
+            (data, response) = try await client.get(from: url)
         } catch {
             throw Error.connectivity
         }
 
-        guard response.statusCode == 200 else {
+        do {
+            return try WorkoutDaysMapper.map(data, from: response)
+        } catch {
             throw Error.invalidData
         }
-        return []
     }
 }
