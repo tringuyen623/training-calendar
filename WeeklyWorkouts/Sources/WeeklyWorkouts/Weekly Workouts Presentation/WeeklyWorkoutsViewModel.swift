@@ -33,6 +33,7 @@ public final class WeeklyWorkoutsViewModel {
     public func send(_ action: Action) async {
         switch action {
         case .loadWeek:
+            guard !isLoading else { return }
             isLoading = true
             do {
                 show(try await loadWeek())

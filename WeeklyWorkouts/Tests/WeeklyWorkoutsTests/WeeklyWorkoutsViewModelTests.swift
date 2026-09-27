@@ -124,6 +124,21 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.isLoading == false)
     }
 
+    @Test func loadWeek_whileLoading_doesNotRequestAnotherLoad() async {
+        let (sut, loader, _) = makeSUT()
+        loader.stubPendingLoad()
+        let loading = Task { await sut.send(.loadWeek) }
+        await loader.waitForPendingLoads()
+
+        loader.stub(.success([]))
+        await sut.send(.loadWeek)
+
+        #expect(loader.loadCallCount == 1)
+
+        loader.completePendingLoads(with: .success([]))
+        await loading.value
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {
