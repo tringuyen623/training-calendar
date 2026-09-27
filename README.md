@@ -194,12 +194,13 @@ Given a workout that is completed
 
 #### Data:
 - Workout ID
+- Its current completion (the local mark if any, otherwise the server status)
 
 #### Primary course (happy path):
 1. Execute "Toggle Completion" command with above data.
-2. System reads the current completion mark for the ID.
-3. System saves the inverted mark locally.
-4. System delivers the new mark.
+2. System inverts the current completion.
+3. System saves the inverted completion as the mark for the ID, replacing any previous mark.
+4. System delivers the new completion.
 
 #### Saving error course (sad path):
 1. System keeps the previous mark.
@@ -326,6 +327,8 @@ graph TD
         Remote["Remote workouts loader<br/>API"] -. conforms to .-> Loader["Workouts loader<br/>protocol"]
         Local["Local workouts loader<br/>cache"] -. conforms to .-> Loader
         Local --> Store["Workouts store<br/>protocol, notifies changes"]
+        Local --> Marks["Completion marks store<br/>protocol"]
+        Toggler["Workout completion toggler"] --> Marks
         Loader --> Models["Weekly workouts<br/>models"]
     end
 ```
