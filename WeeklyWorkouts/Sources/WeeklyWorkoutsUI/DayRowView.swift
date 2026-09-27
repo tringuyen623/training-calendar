@@ -70,7 +70,7 @@ private struct DayRowLayout: Layout {
 }
 
 #Preview("Day row states (not a week)") {
-    VStack(spacing: -Metrics.Row.overlap) {
+    VStack(spacing: 0) {
         DayRowView(viewData: PreviewData.week[0], isLoading: false, onToggle: { _ in })
         DayRowView(viewData: PreviewData.week[1], isLoading: false, onToggle: { _ in })
         DayRowView(viewData: PreviewData.week[2], isLoading: false, onToggle: { _ in })
@@ -92,7 +92,7 @@ private struct DayRowLayout: Layout {
 }
 
 #Preview("Loading rows") {
-    VStack(spacing: -Metrics.Row.overlap) {
+    VStack(spacing: 0) {
         DayRowView(viewData: PreviewData.emptyWeek[0], isLoading: true, onToggle: { _ in })
         DayRowView(viewData: PreviewData.emptyWeek[4], isLoading: true, onToggle: { _ in })
     }

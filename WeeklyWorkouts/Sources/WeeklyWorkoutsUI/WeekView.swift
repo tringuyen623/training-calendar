@@ -40,14 +40,14 @@ public struct WeekView: View {
     }
 }
 
-/// The seven rows, each starting on the previous row's separator.
+/// The seven rows, stacked; each row draws its own bottom separator.
 struct DayRowsView: View {
     let days: [DayViewData]
     let isLoading: Bool
     let onToggle: (WorkoutCardViewData.ID) -> Void
 
     var body: some View {
-        VStack(spacing: -Metrics.Row.overlap) {
+        VStack(spacing: 0) {
             ForEach(days) { day in
                 DayRowView(viewData: day, isLoading: isLoading, onToggle: onToggle)
             }

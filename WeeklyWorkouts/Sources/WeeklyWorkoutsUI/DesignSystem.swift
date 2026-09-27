@@ -51,10 +51,9 @@ enum Metrics {
         static let verticalPadding: CGFloat = 20
         /// 548 − (468 + 72) between the cards of one day.
         static let cardSpacing: CGFloat = 8
-        /// A one-card row: 20 + 72 + 20, with the separator over its bottom point (CSS: at 99.11% of 112).
+        /// A one-card row is 112pt including its bottom separator (CSS: separator at 99.11% of 112): 20 + 72 + 20,
+        /// with the separator over its bottom point. Rows stack without overlapping.
         static let minHeight: CGFloat = verticalPadding + Card.height + verticalPadding
-        /// Each row starts on the previous row's separator (CSS: 112pt rows at 0, 111, …), so rows are 111pt apart.
-        static let overlap: CGFloat = Separator.thickness
         /// The date column group is 46pt tall, centered on the first card (33pt from the row's top).
         static let dateColumnHeight: CGFloat = 46
     }
