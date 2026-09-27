@@ -58,6 +58,14 @@ struct CacheWorkoutsUseCaseTests {
         }
     }
 
+    @Test func save_succeedsOnSuccessfulCacheInsertion() async {
+        let (sut, _) = makeSUT()
+
+        await #expect(throws: Never.self) {
+            try await sut.save(uniqueDays())
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
