@@ -7,8 +7,14 @@ final class CompletionMarksStoreSpy: CompletionMarksStore {
     }
 
     private(set) var receivedMessages: [Message] = []
+    private var deletionResult: Result<Void, Error> = .success(())
+
+    func stubDeletion(with error: Error) {
+        deletionResult = .failure(error)
+    }
 
     func deleteAllMarks() async throws {
         receivedMessages.append(.deleteAllMarks)
+        try deletionResult.get()
     }
 }
