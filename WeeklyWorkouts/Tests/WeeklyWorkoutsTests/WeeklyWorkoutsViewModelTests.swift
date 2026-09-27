@@ -229,7 +229,7 @@ struct WeeklyWorkoutsViewModelTests {
         var calendar = makeCalendar()
         calendar.locale = Locale(identifier: "en_US_POSIX")
         let sut = WeeklyWorkoutsViewModel(
-            loadWeek: loader.load,
+            loader: loader,
             toggleCompletion: toggler.toggle,
             calendar: calendar,
             now: now
@@ -258,8 +258,7 @@ struct WeeklyWorkoutsViewModelTests {
     }
 }
 
-@MainActor
-private final class WeekLoaderSpy {
+private final class WeekLoaderSpy: WorkoutsLoader {
     private(set) var loadCallCount = 0
     private var result: Result<[WorkoutDay], Error>? = .success([])
     private var pendingLoads: [CheckedContinuation<[WorkoutDay], Error>] = []

@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// The week screen's state: always the seven days of the current week, with the delivered workouts placed into them.
-/// It only formats what `WeekSchedule` derives; loading and saving come in through the injected closures.
+/// It only formats what `WeekSchedule` derives; it loads through the injected loader and saves through the injected toggle.
 @MainActor
 @Observable
 public final class WeeklyWorkoutsViewModel {
@@ -19,18 +19,18 @@ public final class WeeklyWorkoutsViewModel {
     /// The week behind `days`, kept to toggle a workout from its current completion.
     @ObservationIgnored private var workoutDays: [WorkoutDay] = []
 
-    private let loadWeek: () async throws -> [WorkoutDay]
+    private let loader: WorkoutsLoader
     private let toggleCompletion: (_ workoutID: String, _ isCompleted: Bool) async throws -> Bool
     private let calendar: Calendar
     private let now: () -> Date
 
     public init(
-        loadWeek: @escaping () async throws -> [WorkoutDay],
+        loader: WorkoutsLoader,
         toggleCompletion: @escaping (_ workoutID: String, _ isCompleted: Bool) async throws -> Bool,
         calendar: Calendar,
         now: @escaping () -> Date
     ) {
-        self.loadWeek = loadWeek
+        self.loader = loader
         self.toggleCompletion = toggleCompletion
         self.calendar = calendar
         self.now = now
@@ -58,7 +58,7 @@ public final class WeeklyWorkoutsViewModel {
         isLoading = true
         defer { isLoading = false }
         do {
-            show(try await loadWeek())
+            show(try await loader.load())
         } catch is CancellationError {
             return
         } catch {
