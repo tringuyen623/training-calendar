@@ -198,29 +198,6 @@ Given a workout that is completed
 
 ---
 
-### Load Workouts From Remote Use Case
-
-#### Data:
-- URL
-
-#### Primary course (happy path):
-1. Execute "Load Workouts" command with above data.
-2. System downloads data from the URL.
-3. System validates downloaded data.
-4. System creates weekly workouts from valid data.
-5. System delivers weekly workouts.
-
-#### Invalid data – error course (sad path):
-1. System delivers invalid data error.
-
-#### Request failure – error course (sad path):
-1. System delivers request failure error.
-
-#### Cancel course:
-1. System delivers a cancellation error.
-
----
-
 ### Reload Cached Weekly Workouts Use Case
 
 #### Primary course:
