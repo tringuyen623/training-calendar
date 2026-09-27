@@ -334,6 +334,7 @@ graph TD
         Toggler["Workout completion toggler"] --> Marks
         Applier["Completion marks applier"] --> Marks
         Loader --> Models["Weekly workouts<br/>models"]
+        Schedule["Week schedule<br/>current week, displayed status"] --> Models
     end
 ```
 
