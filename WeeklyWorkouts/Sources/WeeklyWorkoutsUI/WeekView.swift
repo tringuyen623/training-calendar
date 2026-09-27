@@ -40,7 +40,7 @@ public struct WeekView: View {
     }
 }
 
-/// The seven rows, each with a separator over its bottom point that the next row starts on.
+/// The seven rows, each starting on the previous row's separator.
 struct DayRowsView: View {
     let days: [DayViewData]
     let isLoading: Bool
@@ -50,10 +50,6 @@ struct DayRowsView: View {
         VStack(spacing: -Metrics.Row.overlap) {
             ForEach(days) { day in
                 DayRowView(viewData: day, isLoading: isLoading, onToggle: onToggle)
-                    .overlay(alignment: .bottom) {
-                        Palette.separator
-                            .frame(height: Metrics.Separator.thickness)
-                    }
             }
         }
     }

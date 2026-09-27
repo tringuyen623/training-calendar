@@ -1,7 +1,8 @@
 import SwiftUI
 import WeeklyWorkouts
 
-/// A day: its date next to its workout cards, or a placeholder card while loading.
+/// A day: its date next to its workout cards, or a placeholder card while loading,
+/// with the separator over its bottom point, as in the design.
 /// The row grows with its cards and is never shorter than a one-card row.
 struct DayRowView: View {
     let viewData: DayViewData
@@ -20,6 +21,10 @@ struct DayRowView: View {
                     }
                 }
             }
+        }
+        .overlay(alignment: .bottom) {
+            Palette.separator
+                .frame(height: Metrics.Separator.thickness)
         }
     }
 }
@@ -64,11 +69,11 @@ private struct DayRowLayout: Layout {
     }
 }
 
-#Preview("Day rows") {
-    VStack(spacing: 0) {
-        DayRowView(viewData: PreviewData.week[2], isLoading: false, onToggle: { _ in })
+#Preview("Day row states (not a week)") {
+    VStack(spacing: -Metrics.Row.overlap) {
         DayRowView(viewData: PreviewData.week[0], isLoading: false, onToggle: { _ in })
         DayRowView(viewData: PreviewData.week[1], isLoading: false, onToggle: { _ in })
+        DayRowView(viewData: PreviewData.week[2], isLoading: false, onToggle: { _ in })
         DayRowView(viewData: PreviewData.week[4], isLoading: false, onToggle: { _ in })
         DayRowView(viewData: PreviewData.week[6], isLoading: false, onToggle: { _ in })
     }
@@ -87,7 +92,7 @@ private struct DayRowLayout: Layout {
 }
 
 #Preview("Loading rows") {
-    VStack(spacing: 0) {
+    VStack(spacing: -Metrics.Row.overlap) {
         DayRowView(viewData: PreviewData.emptyWeek[0], isLoading: true, onToggle: { _ in })
         DayRowView(viewData: PreviewData.emptyWeek[4], isLoading: true, onToggle: { _ in })
     }
