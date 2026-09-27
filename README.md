@@ -205,6 +205,21 @@ Given a workout that is completed
 1. System keeps the previous mark.
 2. System delivers error.
 
+---
+
+### Apply Completion Marks Use Case
+
+#### Data:
+- Weekly workouts
+- Completion marks (by workout ID)
+
+#### Primary course:
+1. Execute "Apply Completion Marks" command with above data.
+2. For each workout with a mark, System sets whether it's completed as the mark says, whatever the server status.
+3. Workouts without a mark keep the server's completion.
+4. System ignores marks for workouts that aren't in the week.
+5. System delivers the weekly workouts.
+
 ## Flowchart
 
 ```mermaid
