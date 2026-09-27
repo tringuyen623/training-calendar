@@ -175,6 +175,15 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         #expect(store.receivedMessages == [.retrieve])
     }
 
+    @Test func load_hasNoSideEffectsOnEmptyCache() async {
+        let (sut, store) = makeSUT()
+        store.stubEmptyCache()
+
+        _ = try? await sut.load()
+
+        #expect(store.receivedMessages == [.retrieve])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
