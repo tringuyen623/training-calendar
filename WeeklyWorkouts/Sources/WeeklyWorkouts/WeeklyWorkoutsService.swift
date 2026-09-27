@@ -22,18 +22,25 @@ public final class WeeklyWorkoutsService {
     }
 
     public func loadWeek() async throws -> [WorkoutDay] {
+        try await applyingMarks(to: refresh())
+    }
+
+    public func loadCachedWeek() async throws -> [WorkoutDay] {
+        try await applyingMarks(to: local.load())
+    }
+
+    /// Loads the week from the API and replaces the cache with it, unmarked.
+    private func refresh() async throws -> [WorkoutDay] {
         let (data, response) = try await fetch()
         let days = try map(data, from: response)
         // The loaded week is still delivered when saving fails: the next load saves it again.
         try? await local.save(days)
-        let marks = try await store.retrieveAllMarks()
-        return applying(marks, to: days)
+        return days
     }
 
-    public func loadCachedWeek() async throws -> [WorkoutDay] {
-        let days = try await local.load()
-        let marks = try await store.retrieveAllMarks()
-        return applying(marks, to: days)
+    /// Marks are applied only on the way out, so they never reach the cache.
+    private func applyingMarks(to days: [WorkoutDay]) async throws -> [WorkoutDay] {
+        applying(try await store.retrieveAllMarks(), to: days)
     }
 
     // Generated with Claude. Adjusted to handle a "not completed" mark on a workout the server reports as completed.
