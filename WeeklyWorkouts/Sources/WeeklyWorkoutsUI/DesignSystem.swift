@@ -36,7 +36,7 @@ enum Typography {
 }
 
 /// Every size of the week calendar, from the Figma specs (a 375pt-wide frame).
-/// Horizontal positions and widths are fractions of the screen width; vertical sizes are points.
+/// All sizes are points; the card takes the width left over, so it grows on wider screens.
 enum Metrics {
     enum Row {
         /// CSS: 5.07% of 375.
