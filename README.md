@@ -377,9 +377,7 @@ The brief and the mock API leave a few points open. These are the decisions take
 
 ```mermaid
 graph TD
-    subgraph AppModule["TrainingCalendar app"]
-        Composer["Composition root"]
-    end
+    App["TrainingCalendar app<br/>composition root"]
 
     subgraph UIModule["WeeklyWorkoutsUI"]
         Views["Week views"]
@@ -407,10 +405,8 @@ graph TD
         end
     end
 
-    Composer --> Views
-    Composer --> ViewModel
-    Composer --> URLSession
-    Composer --> SwiftData
+    App --> UIModule
+    App --> Package
     Views --> ViewData
     ViewModel --> ViewData
     ViewModel --> Service
@@ -420,7 +416,7 @@ graph TD
     SwiftData -. conforms to .-> Store
 ```
 
-Solid arrows mean "depends on"; dotted arrows mean "conforms to". The app is the composition root: it creates the concrete types and wires them together. Inside the `WeeklyWorkouts` package, the service only knows the protocols of the API and the cache; each concrete adapter lives in its capability's `Infrastructure` folder. The views only read display data.
+Solid arrows mean "depends on"; dotted arrows mean "conforms to". The whole app target is the composition root: it depends on both modules, creates the concrete types and wires them together. Inside the `WeeklyWorkouts` package, the service only knows the protocols of the API and the cache; each concrete adapter lives in its capability's `Infrastructure` folder. The views only read display data.
 
 ## AI Collaboration
 
