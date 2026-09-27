@@ -213,6 +213,16 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(await receivesChange(from: changes))
     }
 
+    @Test func changes_doesNotNotifyAfterCompletionMarksChange() async throws {
+        let sut = try makeSUT()
+        let changes = await sut.changes()
+
+        try await sut.insertMark(true, for: "workout-a")
+        try await sut.deleteAllMarks()
+
+        #expect(await !receivesChange(from: changes))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
