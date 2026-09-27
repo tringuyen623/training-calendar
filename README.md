@@ -377,16 +377,50 @@ The brief and the mock API leave a few points open. These are the decisions take
 
 ```mermaid
 graph TD
-    App["TrainingCalendar app<br/>composition root"] --> UI["SwiftUI views"]
-    UI --> ViewModel["ViewModel"]
-    ViewModel --> Service["Weekly workouts service"]
-    Service --> Client["HTTP client<br/>protocol"]
-    Service --> Store["Store<br/>protocol"]
-    URLSession["URLSession client"] -. conforms to .-> Client
-    SwiftData["SwiftData store"] -. conforms to .-> Store
+    subgraph AppModule["TrainingCalendar app"]
+        Composer["Composition root"]
+    end
+
+    subgraph UIModule["WeeklyWorkoutsUI"]
+        Views["Week views"]
+    end
+
+    subgraph Package["WeeklyWorkouts"]
+        subgraph Presentation["Presentation"]
+            ViewModel["Weekly workouts ViewModel"]
+            ViewData["View data"]
+        end
+        subgraph Feature["Feature"]
+            Service["Weekly workouts service"]
+        end
+        subgraph API["API"]
+            Client["HTTP client<br/>protocol"]
+            subgraph APIInfra["Infrastructure"]
+                URLSession["URLSession HTTP client"]
+            end
+        end
+        subgraph Cache["Cache"]
+            Store["Workouts store<br/>protocol"]
+            subgraph CacheInfra["Infrastructure"]
+                SwiftData["SwiftData store"]
+            end
+        end
+    end
+
+    Composer --> Views
+    Composer --> ViewModel
+    Composer --> URLSession
+    Composer --> SwiftData
+    Views --> ViewData
+    ViewModel --> ViewData
+    ViewModel --> Service
+    Service --> Client
+    Service --> Store
+    URLSession -. conforms to .-> Client
+    SwiftData -. conforms to .-> Store
 ```
 
-Solid arrows mean "depends on"; dotted arrows mean "conforms to". The composition root creates every concrete type and wires them together; the service and the ViewModel only know the protocols.
+Solid arrows mean "depends on"; dotted arrows mean "conforms to". The app is the composition root: it creates the concrete types and wires them together. Inside the `WeeklyWorkouts` package, the service only knows the protocols of the API and the cache; each concrete adapter lives in its capability's `Infrastructure` folder. The views only read display data.
 
 ## AI Collaboration
 
