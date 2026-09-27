@@ -1,4 +1,4 @@
-public struct WorkoutDay: Equatable {
+public struct WorkoutDay: Equatable, Sendable {
     public let id: String
     public let day: Int
     public let workouts: [Workout]
@@ -10,8 +10,8 @@ public struct WorkoutDay: Equatable {
     }
 }
 
-public struct Workout: Equatable {
-    public enum Status: Equatable {
+public struct Workout: Equatable, Sendable {
+    public enum Status: Equatable, Sendable {
         case assigned
         case missed
         case completed

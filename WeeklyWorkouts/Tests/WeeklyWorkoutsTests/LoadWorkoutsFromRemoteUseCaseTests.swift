@@ -28,6 +28,15 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         #expect(client.requestedURLs == [url, url])
     }
 
+    @Test func load_deliversConnectivityErrorOnClientError() async {
+        let (sut, client) = makeSUT()
+        client.result = .failure(anyNSError())
+
+        await #expect(throws: RemoteWorkoutsLoader.Error.connectivity) {
+            try await sut.load()
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (sut: RemoteWorkoutsLoader, client: HTTPClientSpy) {
@@ -36,12 +45,17 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         return (sut, client)
     }
 
+    private func anyNSError() -> NSError {
+        NSError(domain: "any error", code: 0)
+    }
+
     private final class HTTPClientSpy: HTTPClient {
         private(set) var requestedURLs: [URL] = []
+        var result: Result<(Data, HTTPURLResponse), Error> = .failure(NSError(domain: "not stubbed", code: 0))
 
         func get(from url: URL) async throws -> (Data, HTTPURLResponse) {
             requestedURLs.append(url)
-            throw NSError(domain: "not stubbed", code: 0)
+            return try result.get()
         }
     }
 }
