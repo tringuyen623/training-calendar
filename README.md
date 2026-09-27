@@ -352,16 +352,21 @@ graph TD
     App --> Package
     UI --> Package
     subgraph Package["WeeklyWorkouts"]
-        Remote["Remote workouts loader<br/>API"] -. conforms to .-> Loader["Workouts loader<br/>protocol"]
-        Local["Local workouts loader<br/>cache"] -. conforms to .-> Loader
+        ViewModel["Weekly workouts ViewModel"] --> Service["Weekly workouts service<br/>cached week first, refreshed from the API,<br/>completion marks applied on the way out"]
+        ViewModel --> Toggler["Workout completion toggler"]
+        Service --> Client["HTTP client<br/>protocol"]
+        Service --> Mapper["Workout days mapper<br/>API payload"]
+        Service --> Local["Local workouts loader<br/>cache"]
+        Service --> Marks["Completion marks store<br/>protocol"]
         Local --> Store["Workouts store<br/>protocol, notifies changes"]
-        Local --> Marks["Completion marks store<br/>protocol"]
-        Toggler["Workout completion toggler"] --> Marks
-        Applier["Completion marks applier"] --> Marks
+        Local --> Marks
+        Toggler --> Marks
+        URLSession["URLSession HTTP client"] -. conforms to .-> Client
         SwiftData["SwiftData workouts store<br/>cached workouts and completion marks,<br/>kept as separate models"] -. conforms to .-> Store
         SwiftData -. conforms to .-> Marks
-        Loader --> Models["Weekly workouts<br/>models"]
-        Schedule["Week schedule<br/>current week, displayed status"] --> Models
+        Service --> Models["Weekly workouts<br/>models"]
+        ViewModel --> Schedule["Week schedule<br/>current week, displayed status"]
+        Schedule --> Models
     end
 ```
 
