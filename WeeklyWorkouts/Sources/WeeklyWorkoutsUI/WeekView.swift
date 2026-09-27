@@ -78,17 +78,3 @@ struct DayRowsView: View {
     WeekView(days: PreviewData.emptyWeek, isLoading: false, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
 }
 
-#Preview("320pt and 430pt widths") {
-    HStack(alignment: .top, spacing: 16) {
-        WeekView(days: PreviewData.week, isLoading: false, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
-            .frame(width: 320)
-        WeekView(days: PreviewData.week, isLoading: false, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
-            .frame(width: 430)
-    }
-    .frame(height: 900)
-}
-
-#Preview("Large Dynamic Type") {
-    WeekView(days: PreviewData.week, isLoading: false, errorMessage: nil, onToggle: { _ in }, onDismissError: {})
-        .dynamicTypeSize(.accessibility2)
-}
