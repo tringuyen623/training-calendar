@@ -26,6 +26,18 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         #expect(store.receivedMessages == [.retrieve, .retrieve])
     }
 
+    @Test func load_failsOnRetrievalError() async {
+        let (sut, store) = makeSUT()
+        let retrievalError = anyNSError()
+        store.stubRetrieval(with: retrievalError)
+
+        await #expect {
+            try await sut.load()
+        } throws: { error in
+            error as NSError == retrievalError
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
@@ -34,16 +46,25 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         return (sut, store)
     }
 
+    private func anyNSError() -> NSError {
+        NSError(domain: "any error", code: 0)
+    }
+
     private final class WorkoutsStoreSpy: WorkoutsStore {
         enum Message: Equatable {
             case retrieve
         }
 
         private(set) var receivedMessages: [Message] = []
+        private var retrievalResult: Result<CachedWorkouts?, Error> = .success(nil)
+
+        func stubRetrieval(with error: Error) {
+            retrievalResult = .failure(error)
+        }
 
         func retrieve() async throws -> CachedWorkouts? {
             receivedMessages.append(.retrieve)
-            return nil
+            return try retrievalResult.get()
         }
     }
 }
