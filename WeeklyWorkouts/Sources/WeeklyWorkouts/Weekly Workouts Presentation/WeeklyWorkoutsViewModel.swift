@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// The week screen's state: always the seven days of the current week, with the delivered workouts placed into them.
-/// It only formats what `WeekSchedule` derives; it loads through the injected loader and saves through the injected toggle.
+/// It only formats what `WeekSchedule` derives; it loads through the injected loader and saves completions through the injected toggler.
 @MainActor
 @Observable
 public final class WeeklyWorkoutsViewModel {
@@ -20,18 +20,18 @@ public final class WeeklyWorkoutsViewModel {
     @ObservationIgnored private var workoutDays: [WorkoutDay] = []
 
     private let loader: WorkoutsLoader
-    private let toggleCompletion: (_ workoutID: String, _ isCompleted: Bool) async throws -> Bool
+    private let toggler: WorkoutCompletionToggler
     private let calendar: Calendar
     private let now: () -> Date
 
     public init(
         loader: WorkoutsLoader,
-        toggleCompletion: @escaping (_ workoutID: String, _ isCompleted: Bool) async throws -> Bool,
+        toggler: WorkoutCompletionToggler,
         calendar: Calendar,
         now: @escaping () -> Date
     ) {
         self.loader = loader
-        self.toggleCompletion = toggleCompletion
+        self.toggler = toggler
         self.calendar = calendar
         self.now = now
         show([])
@@ -72,7 +72,7 @@ public final class WeeklyWorkoutsViewModel {
         let isCompleted = workout.status == .completed
         show(settingCompletion(!isCompleted, ofWorkout: workoutID, in: workoutDays))
         do {
-            _ = try await toggleCompletion(workoutID, isCompleted)
+            _ = try await toggler.toggle(workoutID: workoutID, isCompleted: isCompleted)
         } catch {
             show(settingCompletion(isCompleted, ofWorkout: workoutID, in: workoutDays))
             errorMessage = "Couldn't save your change"

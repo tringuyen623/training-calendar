@@ -10,10 +10,10 @@ private let thursday = 3
 @MainActor
 struct WeeklyWorkoutsViewModelTests {
     @Test func init_doesNotRequestLoadOrToggle() {
-        let (_, loader, toggler) = makeSUT()
+        let (_, loader, marksStore) = makeSUT()
 
         #expect(loader.loadCallCount == 0)
-        #expect(toggler.receivedToggles.isEmpty)
+        #expect(marksStore.receivedMessages.isEmpty)
     }
 
     @Test func init_showsTheSevenFormattedDaysOfTheCurrentWeekWithNoWorkouts() {
@@ -150,7 +150,7 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func display_placesDeliveredWorkoutsIntoTheDaysWithoutRequestingLoadOrToggle() {
-        let (sut, loader, toggler) = makeSUT()
+        let (sut, loader, marksStore) = makeSUT()
         let workout = makeWorkout(status: .completed)
 
         sut.display([makeDay(tuesday, with: workout)])
@@ -159,33 +159,33 @@ struct WeeklyWorkoutsViewModelTests {
             WorkoutCardViewData(id: workout.id, title: workout.title, statusText: "Completed", exerciseCount: "5 exercises", status: .completed),
         ])
         #expect(loader.loadCallCount == 0)
-        #expect(toggler.receivedToggles.isEmpty)
+        #expect(marksStore.receivedMessages.isEmpty)
     }
 
     @Test(arguments: [true, false])
     func toggle_requestsToggleWithWorkoutsCurrentCompletion(isCompleted: Bool) async {
-        let (sut, _, toggler) = makeSUT()
+        let (sut, _, marksStore) = makeSUT()
         let workout = makeWorkout(status: isCompleted ? .completed : .assigned)
         sut.display([makeDay(tuesday, with: workout)])
 
         await sut.send(.toggle(workoutID: workout.id))
 
-        #expect(toggler.receivedToggles == [.init(workoutID: workout.id, isCompleted: isCompleted)])
+        #expect(marksStore.receivedMessages == [.insertMark(!isCompleted, workout.id)])
     }
 
     @Test(arguments: zip([Workout.Status.assigned, .completed], [WorkoutCardViewData.Status.completed, .missed]))
     func toggle_showsNewCompletionWhileSaving(status: Workout.Status, expectedStatus: WorkoutCardViewData.Status) async {
-        let (sut, _, toggler) = makeSUT()
+        let (sut, _, marksStore) = makeSUT()
         let workout = makeWorkout(status: status)
         sut.display([makeDay(tuesday, with: workout)])
-        toggler.stubPendingToggle()
+        marksStore.stubPendingInsertion()
 
         let toggling = Task { await sut.send(.toggle(workoutID: workout.id)) }
-        await toggler.waitForPendingToggle()
+        await marksStore.waitForPendingInsertion()
 
         #expect(sut.days[tuesday].workouts.map(\.status) == [expectedStatus])
 
-        toggler.completePendingToggle(with: .success(status != .completed))
+        marksStore.completePendingInsertion(with: .success(()))
         await toggling.value
     }
 
@@ -201,10 +201,10 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func toggle_onFailure_revertsToPreviousCompletionAndShowsError() async {
-        let (sut, _, toggler) = makeSUT()
+        let (sut, _, marksStore) = makeSUT()
         let workout = makeWorkout(status: .completed)
         sut.display([makeDay(tuesday, with: workout)])
-        toggler.stubToggle(with: anyNSError())
+        marksStore.stubInsertion(with: anyNSError())
 
         await sut.send(.toggle(workoutID: workout.id))
 
@@ -223,18 +223,18 @@ struct WeeklyWorkoutsViewModelTests {
 
     private func makeSUT(
         now: @escaping () -> Date = { wednesdayNoon }
-    ) -> (sut: WeeklyWorkoutsViewModel, loader: WeekLoaderSpy, toggler: CompletionTogglerSpy) {
+    ) -> (sut: WeeklyWorkoutsViewModel, loader: WeekLoaderSpy, marksStore: CompletionMarksStoreSpy) {
         let loader = WeekLoaderSpy()
-        let toggler = CompletionTogglerSpy()
+        let marksStore = CompletionMarksStoreSpy()
         var calendar = makeCalendar()
         calendar.locale = Locale(identifier: "en_US_POSIX")
         let sut = WeeklyWorkoutsViewModel(
             loader: loader,
-            toggleCompletion: toggler.toggle,
+            toggler: WorkoutCompletionToggler(marksStore: marksStore),
             calendar: calendar,
             now: now
         )
-        return (sut, loader, toggler)
+        return (sut, loader, marksStore)
     }
 
     private func makeDay(_ day: Int, with workout: Workout) -> WorkoutDay {
@@ -293,55 +293,6 @@ private final class WeekLoaderSpy: WorkoutsLoader {
             pendingLoads.append(continuation)
             pendingLoadWaiters.forEach { $0.resume() }
             pendingLoadWaiters.removeAll()
-        }
-    }
-}
-
-@MainActor
-private final class CompletionTogglerSpy {
-    struct Toggle: Equatable {
-        let workoutID: String
-        let isCompleted: Bool
-    }
-
-    private(set) var receivedToggles: [Toggle] = []
-    private var error: Error?
-    private var isPending = false
-    private var pendingToggle: CheckedContinuation<Bool, Error>?
-    private var pendingToggleWaiters: [CheckedContinuation<Void, Never>] = []
-
-    func stubToggle(with error: Error) {
-        self.error = error
-    }
-
-    /// Toggles stay pending until `completePendingToggle(with:)`.
-    func stubPendingToggle() {
-        isPending = true
-    }
-
-    func waitForPendingToggle() async {
-        while pendingToggle == nil {
-            await withCheckedContinuation { pendingToggleWaiters.append($0) }
-        }
-    }
-
-    func completePendingToggle(with result: Result<Bool, Error>) {
-        pendingToggle?.resume(with: result)
-        pendingToggle = nil
-    }
-
-    func toggle(workoutID: String, isCompleted: Bool) async throws -> Bool {
-        receivedToggles.append(Toggle(workoutID: workoutID, isCompleted: isCompleted))
-        if let error {
-            throw error
-        }
-        guard isPending else {
-            return !isCompleted
-        }
-        return try await withCheckedThrowingContinuation { continuation in
-            pendingToggle = continuation
-            pendingToggleWaiters.forEach { $0.resume() }
-            pendingToggleWaiters.removeAll()
         }
     }
 }
