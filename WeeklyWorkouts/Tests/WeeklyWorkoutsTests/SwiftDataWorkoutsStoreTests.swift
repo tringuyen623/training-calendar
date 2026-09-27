@@ -159,6 +159,17 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(marks == ["workout-a": false])
     }
 
+    @Test func deleteAllMarks_emptiesPreviouslyInsertedMarks() async throws {
+        let sut = try makeSUT()
+        try await sut.insertMark(true, for: "workout-a")
+        try await sut.insertMark(false, for: "workout-b")
+
+        try await sut.deleteAllMarks()
+        let marks = try await sut.retrieveAllMarks()
+
+        #expect(marks.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {

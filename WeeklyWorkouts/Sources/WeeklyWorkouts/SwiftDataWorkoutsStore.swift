@@ -43,7 +43,11 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
 }
 
 extension SwiftDataWorkoutsStore: CompletionMarksStore {
-    public func deleteAllMarks() async throws {}
+    public func deleteAllMarks() async throws {
+        try saveOrRollback {
+            try modelContext.delete(model: ManagedCompletionMark.self)
+        }
+    }
 
     public func insertMark(_ isCompleted: Bool, for workoutID: String) async throws {
         try saveOrRollback {
