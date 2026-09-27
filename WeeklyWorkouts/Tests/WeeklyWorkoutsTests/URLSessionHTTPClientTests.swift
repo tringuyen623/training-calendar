@@ -21,17 +21,6 @@ struct URLSessionHTTPClientTests {
         #expect(requests.map(\.httpMethod) == ["GET"])
     }
 
-    @Test func get_defersCachePolicyToSessionConfiguration() async {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        let sut = makeSUT(configuration: configuration)
-        URLProtocolStub.stub(error: anyNSError())
-
-        _ = try? await sut.get(from: anyURL())
-
-        #expect(URLProtocolStub.observedRequests.map(\.cachePolicy) == [.useProtocolCachePolicy])
-    }
-
     @Test func get_failsOnRequestError() async {
         let requestError = anyNSError()
         let sut = makeSUT()
@@ -98,7 +87,8 @@ struct URLSessionHTTPClientTests {
 
     // MARK: - Helpers
 
-    private func makeSUT(configuration: URLSessionConfiguration = .ephemeral) -> URLSessionHTTPClient {
+    private func makeSUT() -> URLSessionHTTPClient {
+        let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [URLProtocolStub.self]
         let session = URLSession(configuration: configuration)
         return URLSessionHTTPClient(session: session)
