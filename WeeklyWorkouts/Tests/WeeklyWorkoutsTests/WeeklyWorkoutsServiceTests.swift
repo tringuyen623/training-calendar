@@ -62,7 +62,31 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.insertedCaches == [CachedWorkouts(days: serverWeek.days, timestamp: now)])
     }
 
+    @Test(arguments: APIFailure.allCases)
+    func loadWeek_onEmptyCache_doesNotWriteToStoreOnAPIFailure(_ failure: APIFailure) async {
+        let (sut, client, store) = makeSUT()
+        failure.stub(on: client)
+
+        _ = try? await sut.loadWeek()
+
+        #expect(store.writes.isEmpty)
+    }
+
     // MARK: - Helpers
+
+    enum APIFailure: CaseIterable, Sendable {
+        case requestFailure
+        case invalidData
+        case cancellation
+
+        func stub(on client: HTTPClientSpy) {
+            switch self {
+            case .requestFailure: client.stub(error: anyNSError())
+            case .invalidData: client.stub(statusCode: 200, data: Data("invalid json".utf8))
+            case .cancellation: client.stub(error: CancellationError())
+            }
+        }
+    }
 
     private func makeSUT(
         url: URL = URL(string: "https://a-url.com")!
