@@ -61,7 +61,7 @@ struct URLSessionHTTPClientTests {
         let url = anyURL()
         let data = anyData()
         let sut = makeSUT()
-        URLProtocolStub.stub(data: data, response: HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        URLProtocolStub.stub(data: data, response: makeHTTPURLResponse(url: url, statusCode: 200))
 
         let (receivedData, receivedResponse) = try await sut.get(from: url)
 
@@ -73,7 +73,7 @@ struct URLSessionHTTPClientTests {
     @Test func get_deliversEmptyDataAndResponseOnHTTPURLResponseWithNoData() async throws {
         let url = anyURL()
         let sut = makeSUT()
-        URLProtocolStub.stub(data: nil, response: HTTPURLResponse(url: url, statusCode: 204, httpVersion: nil, headerFields: nil)!)
+        URLProtocolStub.stub(data: nil, response: makeHTTPURLResponse(url: url, statusCode: 204))
 
         let (receivedData, receivedResponse) = try await sut.get(from: url)
 
@@ -114,6 +114,10 @@ struct URLSessionHTTPClientTests {
 
     private func anyData() -> Data {
         Data("any data".utf8)
+    }
+
+    private func makeHTTPURLResponse(url: URL, statusCode: Int) -> HTTPURLResponse {
+        HTTPURLResponse(url: url, statusCode: statusCode, httpVersion: nil, headerFields: nil)!
     }
 
     private final class URLProtocolStub: URLProtocol {
