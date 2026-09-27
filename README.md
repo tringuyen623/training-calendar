@@ -333,6 +333,8 @@ graph TD
         Local --> Marks["Completion marks store<br/>protocol"]
         Toggler["Workout completion toggler"] --> Marks
         Applier["Completion marks applier"] --> Marks
+        SwiftData["SwiftData workouts store<br/>cached workouts and completion marks,<br/>kept as separate models"] -. conforms to .-> Store
+        SwiftData -. conforms to .-> Marks
         Loader --> Models["Weekly workouts<br/>models"]
         Schedule["Week schedule<br/>current week, displayed status"] --> Models
     end
