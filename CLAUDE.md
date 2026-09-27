@@ -10,7 +10,7 @@ Don't add behavior that isn't there. If something is unclear or conflicts, stop 
 ## Structure
 
 - `WeeklyWorkouts/` — Swift package for the feature (iOS 17, macOS 14)
-  - `WeeklyWorkouts` target — models, API, cache, rules, ViewModel. Imports Foundation and Observation only — never SwiftUI or UIKit.
+  - `WeeklyWorkouts` target — models, API, cache, rules, ViewModel. Never imports SwiftUI or UIKit. Infrastructure frameworks (URLSession, SwiftData) stay inside their adapters.
   - `WeeklyWorkoutsUI` target — SwiftUI views. Must still compile for macOS.
 - `TrainingCalendar/` — the iOS app. It is the composition root: the only place that creates concrete types and wires them together.
 
