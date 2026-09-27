@@ -83,7 +83,36 @@ struct WeeklyWorkoutsServiceTests {
         #expect(days == serverWeek.days)
     }
 
+    // MARK: - Cached week reloaded after a store change
+
+    @Test func loadCachedWeek_completesNotCompletedWorkoutWithCompletedMark() async throws {
+        let (sut, _, store) = makeSUT()
+        let assigned = makeWorkout(status: .assigned)
+        let missed = makeWorkout(status: .missed)
+        store.stubRetrieval(with: validCache(makeWeek([assigned, missed])))
+        store.stubMarksRetrieval(with: [missed.id: true])
+
+        let days = try await sut.loadCachedWeek()
+
+        #expect(days == makeWeek([assigned, missed.with(status: .completed)]))
+    }
+
     // MARK: - Helpers
+
+    private func validCache(_ days: [WorkoutDay]) -> CachedWorkouts {
+        CachedWorkouts(days: days, timestamp: date(2026, 9, 29, 9, 0))
+    }
+
+    private func makeWorkout(status: Workout.Status) -> Workout {
+        Workout(id: UUID().uuidString, title: UUID().uuidString, status: status, exerciseCount: Int.random(in: 1...20))
+    }
+
+    private func makeWeek(_ workouts: [Workout]) -> [WorkoutDay] {
+        [
+            WorkoutDay(id: "monday-id", day: 0, workouts: workouts),
+            WorkoutDay(id: "friday-id", day: 4, workouts: []),
+        ]
+    }
 
     enum APIFailure: CaseIterable, Sendable {
         case requestFailure
@@ -143,5 +172,11 @@ private extension WeeklyWorkoutsStoreSpy {
             guard case let .insert(days, timestamp) = message else { return nil }
             return CachedWorkouts(days: days, timestamp: timestamp)
         }
+    }
+}
+
+private extension Workout {
+    func with(status: Status) -> Workout {
+        Workout(id: id, title: title, status: status, exerciseCount: exerciseCount)
     }
 }

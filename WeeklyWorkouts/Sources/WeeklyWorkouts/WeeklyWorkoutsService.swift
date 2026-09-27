@@ -29,7 +29,22 @@ public final class WeeklyWorkoutsService {
         return days
     }
 
-    private func fetch() async throws -> (Data, HTTPURLResponse) {
+    public func loadCachedWeek() async throws -> [WorkoutDay] {
+        let days = try await local.load()
+        let marks = try await store.retrieveAllMarks()
+        return applying(marks, to: days)
+    }
+
+    private func applying(_ marks: [String: Bool], to days: [WorkoutDay]) -> [WorkoutDay] {
+        days.map { day in
+            WorkoutDay(id: day.id, day: day.day, workouts: day.workouts.map { workout in
+                guard marks[workout.id] == true else { return workout }
+                return Workout(id: workout.id, title: workout.title, status: .completed, exerciseCount: workout.exerciseCount)
+            })
+        }
+    }
+
+    private func fetch()async throws -> (Data, HTTPURLResponse) {
         do {
             return try await client.get(from: url)
         } catch let cancellation as CancellationError {
