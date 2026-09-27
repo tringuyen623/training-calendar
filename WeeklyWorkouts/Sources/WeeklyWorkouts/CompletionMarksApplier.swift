@@ -9,10 +9,13 @@ public final class CompletionMarksApplier {
         let marks = try await marksStore.retrieveAllMarks()
         return days.map { day in
             WorkoutDay(id: day.id, day: day.day, workouts: day.workouts.map { workout in
-                Workout(
+                guard let isCompleted = marks[workout.id] else {
+                    return workout
+                }
+                return Workout(
                     id: workout.id,
                     title: workout.title,
-                    status: marks[workout.id] == true ? .completed : workout.status,
+                    status: isCompleted ? .completed : .assigned,
                     exerciseCount: workout.exerciseCount
                 )
             })

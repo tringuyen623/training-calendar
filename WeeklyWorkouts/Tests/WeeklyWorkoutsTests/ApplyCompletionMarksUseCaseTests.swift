@@ -50,6 +50,17 @@ struct ApplyCompletionMarksUseCaseTests {
         #expect(receivedDays == makeWeek([assigned, missed.with(status: .completed)]))
     }
 
+    @Test func apply_uncompletesCompletedWorkoutWithNotCompletedMark() async throws {
+        let (sut, marksStore) = makeSUT()
+        let assigned = makeWorkout(status: .assigned)
+        let completed = makeWorkout(status: .completed)
+        marksStore.stubRetrieval(with: [completed.id: false])
+
+        let receivedDays = try await sut.apply(to: makeWeek([assigned, completed]))
+
+        #expect(receivedDays == makeWeek([assigned, completed.with(status: .assigned)]))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> (sut: CompletionMarksApplier, marksStore: CompletionMarksStoreSpy) {
