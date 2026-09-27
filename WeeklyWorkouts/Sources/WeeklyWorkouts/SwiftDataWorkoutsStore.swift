@@ -13,6 +13,7 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
         for cache in try modelContext.fetch(FetchDescriptor<ManagedCache>()) {
             modelContext.delete(cache)
         }
+        try modelContext.save()
     }
 
     public func insert(_ days: [WorkoutDay], timestamp: Date) async throws {
