@@ -17,6 +17,15 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         #expect(store.receivedMessages == [.retrieve])
     }
 
+    @Test func loadTwice_requestsCacheRetrievalTwice() async {
+        let (sut, store) = makeSUT()
+
+        _ = try? await sut.load()
+        _ = try? await sut.load()
+
+        #expect(store.receivedMessages == [.retrieve, .retrieve])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
