@@ -36,6 +36,19 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(cache == CachedWorkouts(days: [], timestamp: timestamp))
     }
 
+    @Test func retrieve_hasNoSideEffectsOnNonEmptyCache() async throws {
+        let sut = try makeSUT()
+        let days = daysOutOfNaturalOrder()
+        let timestamp = Date(timeIntervalSince1970: 1_000)
+        try await sut.insert(days, timestamp: timestamp)
+
+        let firstCache = try await sut.retrieve()
+        let secondCache = try await sut.retrieve()
+
+        #expect(firstCache == CachedWorkouts(days: days, timestamp: timestamp))
+        #expect(secondCache == firstCache)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
