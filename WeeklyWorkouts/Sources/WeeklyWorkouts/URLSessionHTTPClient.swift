@@ -10,7 +10,10 @@ public final class URLSessionHTTPClient: HTTPClient {
     private struct UnexpectedResponse: Error {}
 
     public func get(from url: URL) async throws -> (Data, HTTPURLResponse) {
-        _ = try await session.data(from: url)
-        throw UnexpectedResponse()
+        let (data, response) = try await session.data(from: url)
+        guard let response = response as? HTTPURLResponse else {
+            throw UnexpectedResponse()
+        }
+        return (data, response)
     }
 }

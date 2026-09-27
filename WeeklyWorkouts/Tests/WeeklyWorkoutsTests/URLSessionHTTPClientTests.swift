@@ -57,6 +57,19 @@ struct URLSessionHTTPClientTests {
         }
     }
 
+    @Test func get_deliversDataAndResponseOnHTTPURLResponseWithData() async throws {
+        let url = URL(string: "https://any-url.com")!
+        let data = anyData()
+        let sut = makeSUT()
+        URLProtocolStub.stub(data: data, response: HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+
+        let (receivedData, receivedResponse) = try await sut.get(from: url)
+
+        #expect(receivedData == data)
+        #expect(receivedResponse.url == url)
+        #expect(receivedResponse.statusCode == 200)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(configuration: URLSessionConfiguration = .ephemeral) -> URLSessionHTTPClient {
