@@ -10,18 +10,21 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
     }
 
     public func deleteCachedWorkouts() async throws {
-        for cache in try modelContext.fetch(FetchDescriptor<ManagedCache>()) {
-            modelContext.delete(cache)
-        }
+        try deleteCache()
         try modelContext.save()
     }
 
     public func insert(_ days: [WorkoutDay], timestamp: Date) async throws {
+        try deleteCache()
+        modelContext.insert(ManagedCache(timestamp: timestamp, days: days.enumerated().map(ManagedDay.init)))
+        try modelContext.save()
+    }
+
+    // Deletes only the cache roots: their days and workouts go with them by cascade, and other models are never touched.
+    private func deleteCache() throws {
         for cache in try modelContext.fetch(FetchDescriptor<ManagedCache>()) {
             modelContext.delete(cache)
         }
-        modelContext.insert(ManagedCache(timestamp: timestamp, days: days.enumerated().map(ManagedDay.init)))
-        try modelContext.save()
     }
 }
 
