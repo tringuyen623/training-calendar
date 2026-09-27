@@ -101,6 +101,19 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.days.map(\.isToday) == [true, false, false, false, false, false, false])
     }
 
+    @Test func loadWeek_onFailure_showsTheSevenEmptyDaysAndErrorAndStopsLoading() async {
+        let (sut, loader, _) = makeSUT()
+        loader.stub(.success([WorkoutDay(id: UUID().uuidString, day: 0, workouts: [makeWorkout()])]))
+        await sut.send(.loadWeek)
+
+        loader.stub(.failure(anyNSError()))
+        await sut.send(.loadWeek)
+
+        #expect(sut.days == emptyWeekOfWednesday())
+        #expect(sut.errorMessage == "Couldn't load workouts")
+        #expect(sut.isLoading == false)
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {

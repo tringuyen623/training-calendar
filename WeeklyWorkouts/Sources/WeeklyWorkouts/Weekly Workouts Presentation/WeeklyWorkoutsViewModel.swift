@@ -34,8 +34,11 @@ public final class WeeklyWorkoutsViewModel {
         switch action {
         case .loadWeek:
             isLoading = true
-            if let workoutDays = try? await loadWeek() {
-                show(workoutDays)
+            do {
+                show(try await loadWeek())
+            } catch {
+                show([])
+                errorMessage = "Couldn't load workouts"
             }
             isLoading = false
         }
