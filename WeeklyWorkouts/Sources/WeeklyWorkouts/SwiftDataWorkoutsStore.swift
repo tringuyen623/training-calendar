@@ -10,14 +10,28 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
     }
 
     public func deleteCachedWorkouts() async throws {
-        try deleteCache()
-        try modelContext.save()
+        try saveOrRollback {
+            try deleteCache()
+        }
     }
 
     public func insert(_ days: [WorkoutDay], timestamp: Date) async throws {
-        try deleteCache()
-        modelContext.insert(ManagedCache(timestamp: timestamp, days: days.enumerated().map(ManagedDay.init)))
-        try modelContext.save()
+        try saveOrRollback {
+            try deleteCache()
+            modelContext.insert(ManagedCache(timestamp: timestamp, days: days.enumerated().map(ManagedDay.init)))
+        }
+    }
+
+    // One save per operation, so it's never half-written. On failure the context drops the unsaved changes:
+    // otherwise later retrieves would see them and the next save would commit them.
+    private func saveOrRollback(_ changes: () throws -> Void) throws {
+        do {
+            try changes()
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            throw error
+        }
     }
 
     // Deletes only the cache roots: their days and workouts go with them by cascade, and other models are never touched.
