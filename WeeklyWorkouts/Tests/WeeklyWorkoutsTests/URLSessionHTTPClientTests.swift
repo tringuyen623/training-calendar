@@ -70,6 +70,18 @@ struct URLSessionHTTPClientTests {
         #expect(receivedResponse.statusCode == 200)
     }
 
+    @Test func get_deliversEmptyDataAndResponseOnHTTPURLResponseWithNoData() async throws {
+        let url = URL(string: "https://any-url.com")!
+        let sut = makeSUT()
+        URLProtocolStub.stub(data: nil, response: HTTPURLResponse(url: url, statusCode: 204, httpVersion: nil, headerFields: nil)!)
+
+        let (receivedData, receivedResponse) = try await sut.get(from: url)
+
+        #expect(receivedData == Data())
+        #expect(receivedResponse.url == url)
+        #expect(receivedResponse.statusCode == 204)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(configuration: URLSessionConfiguration = .ephemeral) -> URLSessionHTTPClient {
@@ -108,7 +120,7 @@ struct URLSessionHTTPClientTests {
             state.withLock { $0.stub = Stub(data: nil, response: nil, error: error) }
         }
 
-        static func stub(data: Data, response: URLResponse) {
+        static func stub(data: Data?, response: URLResponse) {
             state.withLock { $0.stub = Stub(data: data, response: response, error: nil) }
         }
 
