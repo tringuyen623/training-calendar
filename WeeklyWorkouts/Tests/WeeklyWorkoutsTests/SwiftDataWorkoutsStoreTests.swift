@@ -120,6 +120,17 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(cache == nil)
     }
 
+    @Test func delete_doesNotDeleteOtherModelsInTheSameContainer() async throws {
+        let container = try makeContainer()
+        let sut = try makeSUT(container: container)
+        try await sut.insert(daysOutOfNaturalOrder(), timestamp: Date(timeIntervalSince1970: 1_000))
+        try insertOtherModel(into: container)
+
+        try await sut.deleteCachedWorkouts()
+
+        #expect(try otherModelsCount(in: container) == 1)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
