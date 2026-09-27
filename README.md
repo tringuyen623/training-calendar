@@ -31,7 +31,7 @@ The feature logic has no UI dependency, so its tests run on macOS without a simu
 - `WeeklyWorkouts/` — Swift package: the `WeeklyWorkouts` target (models, API, cache, rules, ViewModel) and the `WeeklyWorkoutsUI` target (SwiftUI views).
 - `TrainingCalendar/` — the iOS app: composition root only.
 
-Inside the `WeeklyWorkouts` target, code is grouped by capability: `Weekly Workouts Feature` (the models and their rules), `Weekly Workouts Application` (the application service `WeeklyWorkoutsService`, one extension per use case), `Weekly Workouts API`, `Weekly Workouts Cache` and `Weekly Workouts Presentation`. Each concrete adapter (the URLSession client, the SwiftData store) sits in an `Infrastructure` folder inside its capability.
+Inside the `WeeklyWorkouts` target, code is grouped by capability: `Weekly Workouts Feature` (the models and their rules), `Weekly Workouts Application Service` (`WeeklyWorkoutsService`, one extension per use case), `Weekly Workouts API`, `Weekly Workouts Cache` and `Weekly Workouts Presentation`. Each concrete adapter (the URLSession client, the SwiftData store) sits in an `Infrastructure` folder inside its capability.
 
 ## Feature Specs
 
@@ -395,7 +395,7 @@ graph TD
             ViewModel["Weekly workouts ViewModel"]
             ViewData["View data"]
         end
-        subgraph Application["Application"]
+        subgraph Application["Application Service"]
             Service["Weekly workouts service"]
         end
         subgraph Feature["Feature"]
