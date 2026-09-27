@@ -6,6 +6,7 @@ public final class RemoteWorkoutsLoader {
 
     public enum Error: Swift.Error, Equatable {
         case connectivity
+        case invalidData
     }
 
     public init(url: URL, client: HTTPClient) {
@@ -14,10 +15,15 @@ public final class RemoteWorkoutsLoader {
     }
 
     public func load() async throws -> [WorkoutDay] {
+        let response: HTTPURLResponse
         do {
-            _ = try await client.get(from: url)
+            (_, response) = try await client.get(from: url)
         } catch {
             throw Error.connectivity
+        }
+
+        guard response.statusCode == 200 else {
+            throw Error.invalidData
         }
         return []
     }

@@ -37,12 +37,26 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         }
     }
 
+    @Test(arguments: [199, 201, 300, 400, 500])
+    func load_deliversInvalidDataErrorOnNon200HTTPResponse(statusCode: Int) async {
+        let (sut, client) = makeSUT()
+        client.result = .success((makeJSON(days: []), HTTPURLResponse(statusCode: statusCode)))
+
+        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
+            try await sut.load()
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (sut: RemoteWorkoutsLoader, client: HTTPClientSpy) {
         let client = HTTPClientSpy()
         let sut = RemoteWorkoutsLoader(url: url, client: client)
         return (sut, client)
+    }
+
+    private func makeJSON(days: [[String: Any]]) -> Data {
+        try! JSONSerialization.data(withJSONObject: ["data": days])
     }
 
     private func anyNSError() -> NSError {
@@ -57,5 +71,11 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
             requestedURLs.append(url)
             return try result.get()
         }
+    }
+}
+
+private extension HTTPURLResponse {
+    convenience init(statusCode: Int) {
+        self.init(url: URL(string: "https://any-url.com")!, statusCode: statusCode, httpVersion: nil, headerFields: nil)!
     }
 }
