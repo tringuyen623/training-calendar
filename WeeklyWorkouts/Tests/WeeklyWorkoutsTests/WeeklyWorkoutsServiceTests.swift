@@ -40,6 +40,18 @@ struct WeeklyWorkoutsServiceTests {
         #expect(client.requestedURLs == [url])
     }
 
+    @Test func loadWeek_onCachedWeek_doesNotWriteToStoreBeforeRefreshCompletes() async {
+        let (sut, client, store) = makeSUT()
+        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
+        client.stubPendingRequest()
+
+        _ = try? await sut.loadWeek()
+        await client.waitForPendingRequest()
+
+        #expect(store.writes.isEmpty)
+        await completePendingRefresh(of: sut, on: client)
+    }
+
     // MARK: - No cached week
 
     @Test func loadWeek_onEmptyCache_requestsDataFromURLOnce() async {
