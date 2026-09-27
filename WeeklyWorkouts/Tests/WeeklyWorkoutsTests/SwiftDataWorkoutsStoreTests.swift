@@ -49,6 +49,19 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(secondCache == firstCache)
     }
 
+    @Test func retrieve_deliversCacheInsertedByAnotherInstance() async throws {
+        let container = try makeContainer()
+        let sutToInsert = try makeSUT(container: container)
+        let sutToRetrieve = try makeSUT(container: container)
+        let days = daysOutOfNaturalOrder()
+        let timestamp = Date(timeIntervalSince1970: 1_000)
+
+        try await sutToInsert.insert(days, timestamp: timestamp)
+        let cache = try await sutToRetrieve.retrieve()
+
+        #expect(cache == CachedWorkouts(days: days, timestamp: timestamp))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
