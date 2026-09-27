@@ -37,6 +37,13 @@ final class WeeklyWorkoutsComposer {
         try? await service.validateCache()
     }
 
+    /// Loads the week again when there's no cached week for the current week, such as after the cache
+    /// expired in a new week; with a current cached week nothing reloads, so the API isn't called.
+    func loadWeekIfNeeded() async {
+        guard await service.needsLoading() else { return }
+        await viewModel.send(.loadWeek)
+    }
+
     private func displayCachedWeek() async {
         guard let week = try? await service.loadCachedWeek() else { return }
         viewModel.display(week)
