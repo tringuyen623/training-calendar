@@ -342,6 +342,7 @@ The brief and the mock API leave a few points open. These are the decisions take
 | 15 | How is a single exercise written? | The design only shows plural counts | "1 exercise", otherwise "N exercises" |
 | 16 | What does the error state look like? | Not in the design | A system alert when loading or saving a change fails; the week stays on screen behind it |
 | 17 | Should validation delete a cache it can't read? | Not specified | No. A read can fail temporarily, and deleting would lose a good cache; a truly corrupt cache is replaced by the next successful remote load |
+| 18 | What if saving the loaded week fails? | Not specified | The loaded week is still displayed: it is valid data, and failing to cache it doesn't make it wrong. The next load saves it again |
 
 ## Architecture
 
