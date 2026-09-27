@@ -62,6 +62,22 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(cache == CachedWorkouts(days: days, timestamp: timestamp))
     }
 
+    @Test func insert_overridesPreviouslyInsertedCache() async throws {
+        let sut = try makeSUT()
+        try await sut.insert(daysOutOfNaturalOrder(), timestamp: Date(timeIntervalSince1970: 1_000))
+        let latestDays = [
+            WorkoutDay(id: "day-latest", day: 2, workouts: [
+                Workout(id: "workout-latest", title: "Swim", status: .missed, exerciseCount: 4),
+            ]),
+        ]
+        let latestTimestamp = Date(timeIntervalSince1970: 2_000)
+
+        try await sut.insert(latestDays, timestamp: latestTimestamp)
+        let cache = try await sut.retrieve()
+
+        #expect(cache == CachedWorkouts(days: latestDays, timestamp: latestTimestamp))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
