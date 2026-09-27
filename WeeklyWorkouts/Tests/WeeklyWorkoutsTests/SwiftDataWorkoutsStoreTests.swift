@@ -170,6 +170,19 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(marks.isEmpty)
     }
 
+    @Test func deleteAllMarks_doesNotDeleteCachedWorkouts() async throws {
+        let sut = try makeSUT()
+        let days = daysOutOfNaturalOrder()
+        let timestamp = Date(timeIntervalSince1970: 1_000)
+        try await sut.insert(days, timestamp: timestamp)
+        try await sut.insertMark(true, for: "workout-x")
+
+        try await sut.deleteAllMarks()
+        let cache = try await sut.retrieve()
+
+        #expect(cache == CachedWorkouts(days: days, timestamp: timestamp))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
