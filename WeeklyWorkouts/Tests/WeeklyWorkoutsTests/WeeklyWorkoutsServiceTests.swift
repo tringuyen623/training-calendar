@@ -102,6 +102,21 @@ struct WeeklyWorkoutsServiceTests {
         #expect(days == serverWeek.days)
     }
 
+    @Test func loadWeek_onEmptyCache_deliversMarksRetrievalErrorAfterReplacingCache() async {
+        let (sut, client, store) = makeSUT()
+        let serverWeek = makeServerWeek()
+        let retrievalError = anyNSError()
+        client.stub(statusCode: 200, data: serverWeek.json)
+        store.stubMarksRetrieval(with: retrievalError)
+
+        await #expect {
+            try await sut.loadWeek()
+        } throws: { error in
+            error as NSError == retrievalError
+        }
+        #expect(store.insertedCaches == [CachedWorkouts(days: serverWeek.days, timestamp: now)])
+    }
+
     // MARK: - Cached week reloaded after a store change
 
     @Test func loadCachedWeek_completesNotCompletedWorkoutWithCompletedMark() async throws {
