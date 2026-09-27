@@ -332,6 +332,7 @@ graph TD
         Local --> Store["Workouts store<br/>protocol, notifies changes"]
         Local --> Marks["Completion marks store<br/>protocol"]
         Toggler["Workout completion toggler"] --> Marks
+        Applier["Completion marks applier"] --> Marks
         Loader --> Models["Weekly workouts<br/>models"]
     end
 ```
