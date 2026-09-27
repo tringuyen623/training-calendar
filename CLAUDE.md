@@ -19,7 +19,7 @@ Don't add behavior that isn't there. If something is unclear or conflicts, stop 
 - Keep rules, networking, storage and UI separate. Data crosses boundaries as plain models.
 - The logic doesn't depend on networking or storage: it defines the protocols it needs (HTTP client, stores) and those layers conform to them.
 - Business rules live below the ViewModel — never in views, ViewModels or stores: the current Mon–Sun week, a workout's status (missed / assigned / completed / upcoming), cache validity (only within the current week), and local completion marks overriding server status.
-- Completion marks live in their own store, separate from the cached workouts, so saving or replacing the workouts never touches them.
+- Completion marks are their own model, never part of the cached workouts, so saving or replacing the workouts never touches them.
 - Inject dependencies through initializers. No singletons.
 - Treat time as a dependency: inject the current date and the calendar (with its time zone), so week boundaries are testable. Never use `Date()` or `Calendar.current` inside logic.
 - Don't add a layer or protocol unless it removes real coupling.
