@@ -302,7 +302,7 @@ struct WeeklyWorkoutsServiceTests {
 
     private func completePendingRefresh(of sut: WeeklyWorkoutsService, on client: HTTPClientSpy) async {
         await client.waitForPendingRequest()
-        client.completePendingRequest(with: anyNSError())
+        client.completePendingRequests(with: anyNSError())
         await sut.refreshTask?.value
     }
 
