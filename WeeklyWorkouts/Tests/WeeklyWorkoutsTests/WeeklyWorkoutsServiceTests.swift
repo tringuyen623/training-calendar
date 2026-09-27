@@ -78,6 +78,21 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.writes.isEmpty)
     }
 
+    @Test func loadWeek_onCachedWeek_deliversMarksRetrievalErrorWithoutRequestingAPI() async {
+        let (sut, client, store) = makeSUT()
+        let retrievalError = anyNSError()
+        store.stubRetrieval(with: validCache(makeWeek([makeWorkout(status: .assigned)])))
+        store.stubMarksRetrieval(with: retrievalError)
+
+        await #expect {
+            try await sut.loadWeek()
+        } throws: { error in
+            error as NSError == retrievalError
+        }
+        await sut.refreshTask?.value
+        #expect(client.requestedURLs.isEmpty)
+    }
+
     // MARK: - No cached week
 
     @Test func loadWeek_onEmptyCache_requestsDataFromURLOnce() async {

@@ -25,8 +25,11 @@ public final class WeeklyWorkoutsService {
     public func loadWeek() async throws -> [WorkoutDay] {
         let cached = try await local.load()
         guard cached.isEmpty else {
+            let week = try await applyingMarks(to: cached)
+            // A failed refresh keeps the cached week on screen without an error; a successful one
+            // reaches the screen through the store's change notification.
             refreshTask = Task { _ = try? await refresh() }
-            return try await applyingMarks(to: cached)
+            return week
         }
         return try await applyingMarks(to: refresh())
     }
