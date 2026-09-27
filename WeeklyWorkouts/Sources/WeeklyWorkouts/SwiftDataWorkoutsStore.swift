@@ -9,7 +9,11 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
         try modelContext.fetch(FetchDescriptor<ManagedCache>()).first.map { $0.local }
     }
 
-    public func deleteCachedWorkouts() async throws {}
+    public func deleteCachedWorkouts() async throws {
+        for cache in try modelContext.fetch(FetchDescriptor<ManagedCache>()) {
+            modelContext.delete(cache)
+        }
+    }
 
     public func insert(_ days: [WorkoutDay], timestamp: Date) async throws {
         for cache in try modelContext.fetch(FetchDescriptor<ManagedCache>()) {
