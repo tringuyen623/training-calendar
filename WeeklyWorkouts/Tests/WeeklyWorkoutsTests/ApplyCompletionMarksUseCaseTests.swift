@@ -12,7 +12,7 @@ struct ApplyCompletionMarksUseCaseTests {
     @Test func apply_failsOnRetrievalError() async {
         let (sut, marksStore) = makeSUT()
         let retrievalError = anyNSError()
-        marksStore.stubRetrieval(with: retrievalError)
+        marksStore.stubMarksRetrieval(with: retrievalError)
 
         await #expect {
             try await sut.apply(to: uniqueDays())
@@ -23,7 +23,7 @@ struct ApplyCompletionMarksUseCaseTests {
 
     @Test func apply_hasNoSideEffectsOnRetrievalError() async {
         let (sut, marksStore) = makeSUT()
-        marksStore.stubRetrieval(with: anyNSError())
+        marksStore.stubMarksRetrieval(with: anyNSError())
 
         _ = try? await sut.apply(to: uniqueDays())
 
@@ -32,7 +32,7 @@ struct ApplyCompletionMarksUseCaseTests {
 
     @Test func apply_hasNoSideEffectsOnSuccessfulRetrieval() async {
         let (sut, marksStore) = makeSUT()
-        marksStore.stubRetrieval(with: [UUID().uuidString: true])
+        marksStore.stubMarksRetrieval(with: [UUID().uuidString: true])
 
         _ = try? await sut.apply(to: uniqueDays())
 
@@ -43,7 +43,7 @@ struct ApplyCompletionMarksUseCaseTests {
         let (sut, marksStore) = makeSUT()
         let assigned = makeWorkout(status: .assigned)
         let missed = makeWorkout(status: .missed)
-        marksStore.stubRetrieval(with: [missed.id: true])
+        marksStore.stubMarksRetrieval(with: [missed.id: true])
 
         let receivedDays = try await sut.apply(to: makeWeek([assigned, missed]))
 
@@ -54,7 +54,7 @@ struct ApplyCompletionMarksUseCaseTests {
         let (sut, marksStore) = makeSUT()
         let assigned = makeWorkout(status: .assigned)
         let completed = makeWorkout(status: .completed)
-        marksStore.stubRetrieval(with: [completed.id: false])
+        marksStore.stubMarksRetrieval(with: [completed.id: false])
 
         let receivedDays = try await sut.apply(to: makeWeek([assigned, completed]))
 
@@ -67,7 +67,7 @@ struct ApplyCompletionMarksUseCaseTests {
         let assigned = makeWorkout(status: .assigned)
         let missed = makeWorkout(status: .missed)
         let completed = makeWorkout(status: .completed)
-        marksStore.stubRetrieval(with: [marked.id: true])
+        marksStore.stubMarksRetrieval(with: [marked.id: true])
 
         let receivedDays = try await sut.apply(to: makeWeek([marked, assigned, missed, completed]))
 
@@ -77,7 +77,7 @@ struct ApplyCompletionMarksUseCaseTests {
     @Test func apply_ignoresMarksForWorkoutsNotInWeek() async throws {
         let (sut, marksStore) = makeSUT()
         let week = makeWeek([makeWorkout(status: .assigned), makeWorkout(status: .completed)])
-        marksStore.stubRetrieval(with: [UUID().uuidString: true, UUID().uuidString: false, week[0].id: false])
+        marksStore.stubMarksRetrieval(with: [UUID().uuidString: true, UUID().uuidString: false, week[0].id: false])
 
         let receivedDays = try await sut.apply(to: week)
 
@@ -86,8 +86,8 @@ struct ApplyCompletionMarksUseCaseTests {
 
     // MARK: - Helpers
 
-    private func makeSUT() -> (sut: CompletionMarksApplier, marksStore: CompletionMarksStoreSpy) {
-        let marksStore = CompletionMarksStoreSpy()
+    private func makeSUT() -> (sut: CompletionMarksApplier, marksStore: WeeklyWorkoutsStoreSpy) {
+        let marksStore = WeeklyWorkoutsStoreSpy()
         let sut = CompletionMarksApplier(marksStore: marksStore)
         return (sut, marksStore)
     }

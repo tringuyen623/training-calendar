@@ -178,14 +178,14 @@ struct WeeklyWorkoutsViewModelTests {
         let (sut, _, marksStore) = makeSUT()
         let workout = makeWorkout(status: status)
         sut.display([makeDay(tuesday, with: workout)])
-        marksStore.stubPendingInsertion()
+        marksStore.stubPendingMarkInsertion()
 
         let toggling = Task { await sut.send(.toggle(workoutID: workout.id)) }
-        await marksStore.waitForPendingInsertion()
+        await marksStore.waitForPendingMarkInsertion()
 
         #expect(sut.days[tuesday].workouts.map(\.status) == [expectedStatus])
 
-        marksStore.completePendingInsertion(with: .success(()))
+        marksStore.completePendingMarkInsertion(with: .success(()))
         await toggling.value
     }
 
@@ -204,7 +204,7 @@ struct WeeklyWorkoutsViewModelTests {
         let (sut, _, marksStore) = makeSUT()
         let workout = makeWorkout(status: .completed)
         sut.display([makeDay(tuesday, with: workout)])
-        marksStore.stubInsertion(with: anyNSError())
+        marksStore.stubMarkInsertion(with: anyNSError())
 
         await sut.send(.toggle(workoutID: workout.id))
 
@@ -223,9 +223,9 @@ struct WeeklyWorkoutsViewModelTests {
 
     private func makeSUT(
         now: @escaping () -> Date = { wednesdayNoon }
-    ) -> (sut: WeeklyWorkoutsViewModel, loader: WeekLoaderSpy, marksStore: CompletionMarksStoreSpy) {
+    ) -> (sut: WeeklyWorkoutsViewModel, loader: WeekLoaderSpy, marksStore: WeeklyWorkoutsStoreSpy) {
         let loader = WeekLoaderSpy()
-        let marksStore = CompletionMarksStoreSpy()
+        let marksStore = WeeklyWorkoutsStoreSpy()
         var calendar = makeCalendar()
         calendar.locale = Locale(identifier: "en_US_POSIX")
         let sut = WeeklyWorkoutsViewModel(

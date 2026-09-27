@@ -4,7 +4,7 @@ import WeeklyWorkouts
 
 struct ValidateWorkoutsCacheUseCaseTests {
     @Test func validateCache_failsOnRetrievalError() async {
-        let (sut, store, _) = makeSUT()
+        let (sut, store) = makeSUT()
         let retrievalError = anyNSError()
         store.stubRetrieval(with: retrievalError)
 
@@ -16,53 +16,49 @@ struct ValidateWorkoutsCacheUseCaseTests {
     }
 
     @Test func validateCache_hasNoSideEffectsOnRetrievalError() async {
-        let (sut, store, marksStore) = makeSUT()
+        let (sut, store) = makeSUT()
         store.stubRetrieval(with: anyNSError())
 
         _ = try? await sut.validateCache()
 
         #expect(store.receivedMessages == [.retrieve])
-        #expect(marksStore.receivedMessages.isEmpty)
     }
 
     @Test func validateCache_hasNoSideEffectsOnEmptyCache() async throws {
-        let (sut, store, marksStore) = makeSUT()
+        let (sut, store) = makeSUT()
         store.stubEmptyCache()
 
         try await sut.validateCache()
 
         #expect(store.receivedMessages == [.retrieve])
-        #expect(marksStore.receivedMessages.isEmpty)
     }
 
     @Test func validateCache_hasNoSideEffectsOnNonExpiredCache() async throws {
         let now = date(2026, 9, 30, 12, 0)
-        let (sut, store, marksStore) = makeSUT(currentDate: { now })
+        let (sut, store) = makeSUT(currentDate: { now })
         store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 29, 9, 0)))
 
         try await sut.validateCache()
 
         #expect(store.receivedMessages == [.retrieve])
-        #expect(marksStore.receivedMessages.isEmpty)
     }
 
     @Test func validateCache_deletesCacheAndCompletionMarksOnExpiredCache() async throws {
         let now = date(2026, 9, 30, 12, 0)
-        let (sut, store, marksStore) = makeSUT(currentDate: { now })
+        let (sut, store) = makeSUT(currentDate: { now })
         store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
 
         try await sut.validateCache()
 
-        #expect(store.receivedMessages == [.retrieve, .deleteCachedWorkouts])
-        #expect(marksStore.receivedMessages == [.deleteAllMarks])
+        #expect(store.receivedMessages == [.retrieve, .deleteAllMarks, .deleteCachedWorkouts])
     }
 
     @Test func validateCache_failsOnCompletionMarksDeletionError() async {
         let now = date(2026, 9, 30, 12, 0)
-        let (sut, store, marksStore) = makeSUT(currentDate: { now })
+        let (sut, store) = makeSUT(currentDate: { now })
         let marksDeletionError = NSError(domain: "marks deletion error", code: 0)
         store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
-        marksStore.stubDeletion(with: marksDeletionError)
+        store.stubMarksDeletion(with: marksDeletionError)
 
         await #expect {
             try await sut.validateCache()
@@ -73,19 +69,18 @@ struct ValidateWorkoutsCacheUseCaseTests {
 
     @Test func validateCache_doesNotDeleteCachedWorkoutsOnCompletionMarksDeletionError() async {
         let now = date(2026, 9, 30, 12, 0)
-        let (sut, store, marksStore) = makeSUT(currentDate: { now })
+        let (sut, store) = makeSUT(currentDate: { now })
         store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
-        marksStore.stubDeletion(with: anyNSError())
+        store.stubMarksDeletion(with: anyNSError())
 
         try? await sut.validateCache()
 
-        #expect(store.receivedMessages == [.retrieve])
-        #expect(marksStore.receivedMessages == [.deleteAllMarks])
+        #expect(store.receivedMessages == [.retrieve, .deleteAllMarks])
     }
 
     @Test func validateCache_failsOnCachedWorkoutsDeletionErrorOnExpiredCache() async {
         let now = date(2026, 9, 30, 12, 0)
-        let (sut, store, _) = makeSUT(currentDate: { now })
+        let (sut, store) = makeSUT(currentDate: { now })
         let deletionError = NSError(domain: "deletion error", code: 0)
         store.stubRetrieval(with: uniqueCache(savedAt: date(2026, 9, 25, 18, 0)))
         store.stubDeletion(with: deletionError)
@@ -101,10 +96,9 @@ struct ValidateWorkoutsCacheUseCaseTests {
 
     private func makeSUT(
         currentDate: @escaping () -> Date = { Date(timeIntervalSince1970: 0) }
-    ) -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy, marksStore: CompletionMarksStoreSpy) {
-        let store = WorkoutsStoreSpy()
-        let marksStore = CompletionMarksStoreSpy()
-        let sut = LocalWorkoutsLoader(store: store, marksStore: marksStore, calendar: makeCalendar(), currentDate: currentDate)
-        return (sut, store, marksStore)
+    ) -> (sut: LocalWorkoutsLoader, store: WeeklyWorkoutsStoreSpy) {
+        let store = WeeklyWorkoutsStoreSpy()
+        let sut = LocalWorkoutsLoader(store: store, marksStore: store, calendar: makeCalendar(), currentDate: currentDate)
+        return (sut, store)
     }
 }
