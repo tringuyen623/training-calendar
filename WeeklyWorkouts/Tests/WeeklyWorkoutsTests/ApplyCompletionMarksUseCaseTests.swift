@@ -9,6 +9,18 @@ struct ApplyCompletionMarksUseCaseTests {
         #expect(marksStore.receivedMessages.isEmpty)
     }
 
+    @Test func apply_failsOnRetrievalError() async {
+        let (sut, marksStore) = makeSUT()
+        let retrievalError = anyNSError()
+        marksStore.stubRetrieval(with: retrievalError)
+
+        await #expect {
+            try await sut.apply(to: uniqueDays())
+        } throws: { error in
+            error as NSError == retrievalError
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> (sut: CompletionMarksApplier, marksStore: CompletionMarksStoreSpy) {
