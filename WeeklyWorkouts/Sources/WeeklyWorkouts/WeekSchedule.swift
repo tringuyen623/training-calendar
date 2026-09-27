@@ -23,13 +23,14 @@ public struct ScheduledWorkout: Equatable, Sendable {
 public enum WeekSchedule {
     public static func days(for days: [WorkoutDay], now: Date, calendar: Calendar) -> [ScheduledDay] {
         let monday = MondayFirstWeek.start(of: now, in: calendar)
+        let today = calendar.startOfDay(for: now)
         return (0..<7).map { index in
             let date = calendar.date(byAdding: .day, value: index, to: monday)!
             let workouts = days.first { $0.day == index }?.workouts ?? []
             return ScheduledDay(
                 date: date,
                 isToday: calendar.isDate(date, inSameDayAs: now),
-                workouts: workouts.map { ScheduledWorkout(id: $0.id, title: $0.title, exerciseCount: $0.exerciseCount, status: .assigned) }
+                workouts: workouts.map { ScheduledWorkout(id: $0.id, title: $0.title, exerciseCount: $0.exerciseCount, status: date < today ? .missed : .assigned) }
             )
         }
     }

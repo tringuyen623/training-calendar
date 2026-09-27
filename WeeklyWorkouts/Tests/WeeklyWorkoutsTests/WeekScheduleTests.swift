@@ -37,7 +37,20 @@ struct WeekScheduleTests {
         #expect(days.map(\.isToday) == [false, false, true, false, false, false, false])
     }
 
+    @Test func days_showsMissedForNotCompletedWorkoutBeforeToday() {
+        #expect(status(of: makeWorkout(status: .assigned), on: tuesday) == .missed)
+    }
+
     // MARK: - Helpers
+
+    private let wednesdayNoon = date(2026, 9, 30, 12, 0)
+    private let tuesday = 1
+
+    private func status(of workout: Workout, on day: Int) -> ScheduledWorkout.Status? {
+        let serverDays = [WorkoutDay(id: UUID().uuidString, day: day, workouts: [workout])]
+        let days = WeekSchedule.days(for: serverDays, now: wednesdayNoon, calendar: makeCalendar())
+        return days[day].workouts.first?.status
+    }
 
     private func makeWorkout(status: Workout.Status = .assigned) -> Workout {
         Workout(id: UUID().uuidString, title: "title \(UUID().uuidString)", status: status, exerciseCount: Int.random(in: 1...20))
