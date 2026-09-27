@@ -20,15 +20,7 @@ public struct WeekView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                ForEach(viewData.days) { day in
-                    DayRowView(viewData: day, isLoading: viewData.state == .loading, onToggle: onToggle)
-                        .overlay(alignment: .bottom) {
-                            Palette.separator
-                                .frame(height: Metrics.Separator.thickness)
-                        }
-                }
-            }
+            DayRowsView(days: viewData.days, isLoading: viewData.state == .loading, onToggle: onToggle)
         }
         .background(Palette.background.ignoresSafeArea())
         .alert("Couldn't load workouts", isPresented: isShowingError, presenting: errorMessage) { _ in
@@ -45,6 +37,25 @@ public struct WeekView: View {
 
     private var isShowingError: Binding<Bool> {
         Binding(get: { errorMessage != nil }, set: { _ in })
+    }
+}
+
+/// The seven rows, each with a separator over its bottom point.
+struct DayRowsView: View {
+    let days: [DayViewData]
+    let isLoading: Bool
+    let onToggle: (WorkoutCardViewData.ID) -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(days) { day in
+                DayRowView(viewData: day, isLoading: isLoading, onToggle: onToggle)
+                    .overlay(alignment: .bottom) {
+                        Palette.separator
+                            .frame(height: Metrics.Separator.thickness)
+                    }
+            }
+        }
     }
 }
 
