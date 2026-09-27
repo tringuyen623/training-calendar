@@ -2,12 +2,14 @@ import Foundation
 
 public typealias WeeklyWorkoutsStore = WorkoutsStore & CompletionMarksStore
 
+/// Loads the week screen's workouts: the cached week first, refreshed from the API, with the local completion marks applied on the way out.
 @MainActor
 public final class WeeklyWorkoutsService {
     private let url: URL
     private let client: HTTPClient
     private let store: WeeklyWorkoutsStore
     private let local: LocalWorkoutsLoader
+    /// The background refresh started by the last `loadWeek()` that delivered the cached week.
     private(set) var refreshTask: Task<Void, Never>?
 
     public enum Error: Swift.Error, Equatable {
@@ -52,6 +54,24 @@ public final class WeeklyWorkoutsService {
         return days
     }
 
+    private func fetch() async throws -> (Data, HTTPURLResponse) {
+        do {
+            return try await client.get(from: url)
+        } catch let cancellation as CancellationError {
+            throw cancellation
+        } catch {
+            throw Error.requestFailure
+        }
+    }
+
+    private func map(_ data: Data, from response: HTTPURLResponse) throws -> [WorkoutDay] {
+        do {
+            return try WorkoutDaysMapper.map(data, from: response)
+        } catch {
+            throw Error.invalidData
+        }
+    }
+
     /// Marks are applied only on the way out, so they never reach the cache.
     private func applyingMarks(to days: [WorkoutDay]) async throws -> [WorkoutDay] {
         applying(try await store.retrieveAllMarks(), to: days)
@@ -70,24 +90,6 @@ public final class WeeklyWorkoutsService {
                     exerciseCount: workout.exerciseCount
                 )
             })
-        }
-    }
-
-    private func fetch()async throws -> (Data, HTTPURLResponse) {
-        do {
-            return try await client.get(from: url)
-        } catch let cancellation as CancellationError {
-            throw cancellation
-        } catch {
-            throw Error.requestFailure
-        }
-    }
-
-    private func map(_ data: Data, from response: HTTPURLResponse) throws -> [WorkoutDay] {
-        do {
-            return try WorkoutDaysMapper.map(data, from: response)
-        } catch {
-            throw Error.invalidData
         }
     }
 }
