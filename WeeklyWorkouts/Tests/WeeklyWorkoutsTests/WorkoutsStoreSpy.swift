@@ -47,4 +47,8 @@ final class WorkoutsStoreSpy: WorkoutsStore {
         receivedMessages.append(.insert(days, timestamp))
         try insertionResult.get()
     }
+
+    func changes() async -> AsyncStream<Void> {
+        AsyncStream { _ in }
+    }
 }

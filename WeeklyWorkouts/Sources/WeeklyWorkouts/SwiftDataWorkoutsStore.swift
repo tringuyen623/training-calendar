@@ -5,6 +5,8 @@ import SwiftData
 public actor SwiftDataWorkoutsStore: WorkoutsStore {
     public static let models: [any PersistentModel.Type] = [ManagedCache.self, ManagedDay.self, ManagedWorkout.self, ManagedCompletionMark.self]
 
+    private var changeObservers: [UUID: AsyncStream<Void>.Continuation] = [:]
+
     public func retrieve() async throws -> CachedWorkouts? {
         try modelContext.fetch(FetchDescriptor<ManagedCache>()).first.map { try $0.toModel() }
     }
@@ -13,12 +15,35 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
         try saveOrRollback {
             try deleteCache()
         }
+        notifyChange()
     }
 
     public func insert(_ days: [WorkoutDay], timestamp: Date) async throws {
         try saveOrRollback {
             try deleteCache()
             modelContext.insert(ManagedCache(timestamp: timestamp, days: days.enumerated().map(ManagedDay.init)))
+        }
+        notifyChange()
+    }
+
+    // A slow observer gets one pending notification, not one per change: it only needs to read the store again.
+    public func changes() async -> AsyncStream<Void> {
+        let (changes, observer) = AsyncStream.makeStream(of: Void.self, bufferingPolicy: .bufferingNewest(1))
+        let id = UUID()
+        changeObservers[id] = observer
+        observer.onTermination = { [weak self] _ in
+            Task { await self?.removeChangeObserver(id) }
+        }
+        return changes
+    }
+
+    private func removeChangeObserver(_ id: UUID) {
+        changeObservers[id] = nil
+    }
+
+    private func notifyChange() {
+        for observer in changeObservers.values {
+            observer.yield()
         }
     }
 

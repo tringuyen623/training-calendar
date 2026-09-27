@@ -14,4 +14,7 @@ public protocol WorkoutsStore {
     func retrieve() async throws -> CachedWorkouts?
     func deleteCachedWorkouts() async throws
     func insert(_ days: [WorkoutDay], timestamp: Date) async throws
+
+    /// Delivers a value each time the stored workouts change, until the caller stops iterating.
+    func changes() async -> AsyncStream<Void>
 }
