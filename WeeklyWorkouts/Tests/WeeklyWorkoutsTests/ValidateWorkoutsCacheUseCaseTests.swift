@@ -3,23 +3,23 @@ import Testing
 import WeeklyWorkouts
 
 struct ValidateWorkoutsCacheUseCaseTests {
-    @Test func validateCache_deletesCacheOnRetrievalError() async throws {
+    @Test func validateCache_failsOnRetrievalError() async {
+        let (sut, store, _) = makeSUT()
+        let retrievalError = anyNSError()
+        store.stubRetrieval(with: retrievalError)
+
+        await #expect {
+            try await sut.validateCache()
+        } throws: { error in
+            error as NSError == retrievalError
+        }
+    }
+
+    @Test func validateCache_hasNoSideEffectsOnRetrievalError() async {
         let (sut, store, marksStore) = makeSUT()
         store.stubRetrieval(with: anyNSError())
 
-        try await sut.validateCache()
-
-        #expect(store.receivedMessages == [.retrieve, .deleteCachedWorkouts])
-        #expect(marksStore.receivedMessages.isEmpty)
-    }
-
-    @Test func validateCache_doesNotDeleteCacheOnRetrievalCancellation() async {
-        let (sut, store, marksStore) = makeSUT()
-        store.stubRetrieval(with: CancellationError())
-
-        await #expect(throws: CancellationError.self) {
-            try await sut.validateCache()
-        }
+        _ = try? await sut.validateCache()
 
         #expect(store.receivedMessages == [.retrieve])
         #expect(marksStore.receivedMessages.isEmpty)
@@ -55,19 +55,6 @@ struct ValidateWorkoutsCacheUseCaseTests {
 
         #expect(store.receivedMessages == [.retrieve, .deleteCachedWorkouts])
         #expect(marksStore.receivedMessages == [.deleteAllMarks])
-    }
-
-    @Test func validateCache_failsOnDeletionErrorAfterRetrievalError() async {
-        let (sut, store, _) = makeSUT()
-        let deletionError = NSError(domain: "deletion error", code: 0)
-        store.stubRetrieval(with: anyNSError())
-        store.stubDeletion(with: deletionError)
-
-        await #expect {
-            try await sut.validateCache()
-        } throws: { error in
-            error as NSError == deletionError
-        }
     }
 
     @Test func validateCache_failsOnCompletionMarksDeletionError() async {
