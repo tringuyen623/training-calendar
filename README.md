@@ -19,7 +19,7 @@ Coming soon: the link will be added here.
 
 The feature logic has no UI dependency, so its tests run on macOS without a simulator. Either:
 
-- **Xcode:** open `WeeklyWorkouts/Package.swift`, select the `WeeklyWorkouts-Package` scheme with **My Mac** (or any iPhone simulator) as the destination, and press ⌘U.
+- **Xcode:** in `TrainingCalendar/TrainingCalendar.xcodeproj`, select the `WeeklyWorkouts` scheme with **My Mac** (or any iPhone simulator) as the destination, and press ⌘U.
 - **Terminal:**
 
   ```sh
