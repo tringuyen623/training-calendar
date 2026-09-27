@@ -3,7 +3,7 @@ import SwiftData
 
 @ModelActor
 public actor SwiftDataWorkoutsStore: WorkoutsStore {
-    public static let models: [any PersistentModel.Type] = [ManagedCache.self, ManagedDay.self, ManagedWorkout.self]
+    public static let models: [any PersistentModel.Type] = [ManagedCache.self, ManagedDay.self, ManagedWorkout.self, ManagedCompletionMark.self]
 
     public func retrieve() async throws -> CachedWorkouts? {
         try modelContext.fetch(FetchDescriptor<ManagedCache>()).first.map { try $0.toModel() }
@@ -39,6 +39,37 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
         for cache in try modelContext.fetch(FetchDescriptor<ManagedCache>()) {
             modelContext.delete(cache)
         }
+    }
+}
+
+extension SwiftDataWorkoutsStore: CompletionMarksStore {
+    public func deleteAllMarks() async throws {
+        try saveOrRollback {
+            try modelContext.delete(model: ManagedCompletionMark.self)
+        }
+    }
+
+    public func insertMark(_ isCompleted: Bool, for workoutID: String) async throws {
+        try saveOrRollback {
+            try modelContext.delete(model: ManagedCompletionMark.self, where: #Predicate { $0.workoutID == workoutID })
+            modelContext.insert(ManagedCompletionMark(workoutID: workoutID, isCompleted: isCompleted))
+        }
+    }
+
+    public func retrieveAllMarks() async throws -> [String: Bool] {
+        let marks = try modelContext.fetch(FetchDescriptor<ManagedCompletionMark>())
+        return Dictionary(uniqueKeysWithValues: marks.map { ($0.workoutID, $0.isCompleted) })
+    }
+}
+
+@Model
+private final class ManagedCompletionMark {
+    var workoutID: String
+    var isCompleted: Bool
+
+    init(workoutID: String, isCompleted: Bool) {
+        self.workoutID = workoutID
+        self.isCompleted = isCompleted
     }
 }
 

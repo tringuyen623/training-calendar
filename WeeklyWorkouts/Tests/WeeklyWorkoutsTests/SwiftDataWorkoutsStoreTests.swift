@@ -131,6 +131,69 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(try otherModelsCount(in: container) == 1)
     }
 
+    @Test func retrieveAllMarks_deliversNoMarksOnEmptyStore() async throws {
+        let sut = try makeSUT()
+
+        let marks = try await sut.retrieveAllMarks()
+
+        #expect(marks.isEmpty)
+    }
+
+    @Test func retrieveAllMarks_deliversInsertedMarksKeyedByWorkoutID() async throws {
+        let sut = try makeSUT()
+
+        try await sut.insertMark(true, for: "workout-a")
+        try await sut.insertMark(false, for: "workout-b")
+        let marks = try await sut.retrieveAllMarks()
+
+        #expect(marks == ["workout-a": true, "workout-b": false])
+    }
+
+    @Test func insertMark_replacesPreviousMarkForTheSameWorkoutID() async throws {
+        let sut = try makeSUT()
+        try await sut.insertMark(true, for: "workout-a")
+
+        try await sut.insertMark(false, for: "workout-a")
+        let marks = try await sut.retrieveAllMarks()
+
+        #expect(marks == ["workout-a": false])
+    }
+
+    @Test func deleteAllMarks_emptiesPreviouslyInsertedMarks() async throws {
+        let sut = try makeSUT()
+        try await sut.insertMark(true, for: "workout-a")
+        try await sut.insertMark(false, for: "workout-b")
+
+        try await sut.deleteAllMarks()
+        let marks = try await sut.retrieveAllMarks()
+
+        #expect(marks.isEmpty)
+    }
+
+    @Test func deleteAllMarks_doesNotDeleteCachedWorkouts() async throws {
+        let sut = try makeSUT()
+        let days = daysOutOfNaturalOrder()
+        let timestamp = Date(timeIntervalSince1970: 1_000)
+        try await sut.insert(days, timestamp: timestamp)
+        try await sut.insertMark(true, for: "workout-x")
+
+        try await sut.deleteAllMarks()
+        let cache = try await sut.retrieve()
+
+        #expect(cache == CachedWorkouts(days: days, timestamp: timestamp))
+    }
+
+    @Test func deleteCachedWorkouts_doesNotDeleteMarks() async throws {
+        let sut = try makeSUT()
+        try await sut.insert(daysOutOfNaturalOrder(), timestamp: Date(timeIntervalSince1970: 1_000))
+        try await sut.insertMark(true, for: "workout-x")
+
+        try await sut.deleteCachedWorkouts()
+        let marks = try await sut.retrieveAllMarks()
+
+        #expect(marks == ["workout-x": true])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
@@ -172,7 +235,7 @@ struct SwiftDataWorkoutsStoreTests {
     }
 }
 
-/// Stands for any other model sharing the container, such as the completion marks.
+/// Stands for any other model sharing the container, such as another feature's data.
 @Model
 private final class OtherModel {
     var createdAt = Date(timeIntervalSince1970: 0)
