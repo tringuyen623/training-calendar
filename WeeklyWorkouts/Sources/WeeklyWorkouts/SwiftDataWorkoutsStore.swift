@@ -6,7 +6,7 @@ public actor SwiftDataWorkoutsStore: WorkoutsStore {
     public static let models: [any PersistentModel.Type] = [ManagedCache.self, ManagedDay.self, ManagedWorkout.self]
 
     public func retrieve() async throws -> CachedWorkouts? {
-        try modelContext.fetch(FetchDescriptor<ManagedCache>()).first.map { $0.local }
+        try modelContext.fetch(FetchDescriptor<ManagedCache>()).first.map { try $0.toModel() }
     }
 
     public func deleteCachedWorkouts() async throws {
@@ -52,8 +52,8 @@ private final class ManagedCache {
         self.days = days
     }
 
-    var local: CachedWorkouts {
-        CachedWorkouts(days: days.sorted { $0.position < $1.position }.map(\.local), timestamp: timestamp)
+    func toModel() throws -> CachedWorkouts {
+        CachedWorkouts(days: try days.sorted { $0.position < $1.position }.map { try $0.toModel() }, timestamp: timestamp)
     }
 }
 
@@ -71,8 +71,8 @@ private final class ManagedDay {
         self.workouts = day.workouts.enumerated().map(ManagedWorkout.init)
     }
 
-    var local: WorkoutDay {
-        WorkoutDay(id: id, day: day, workouts: workouts.sorted { $0.position < $1.position }.map(\.local))
+    func toModel() throws -> WorkoutDay {
+        WorkoutDay(id: id, day: day, workouts: try workouts.sorted { $0.position < $1.position }.map { try $0.toModel() })
     }
 }
 
@@ -81,22 +81,42 @@ private final class ManagedWorkout {
     var position: Int
     var id: String
     var title: String
-    var status: Int
+    var statusCode: Int
     var exerciseCount: Int
 
     init(position: Int, workout: Workout) {
         self.position = position
         self.id = workout.id
         self.title = workout.title
-        self.status = switch workout.status {
+        self.statusCode = workout.status.storedCode
+        self.exerciseCount = workout.exerciseCount
+    }
+
+    func toModel() throws -> Workout {
+        guard let status = Workout.Status(storedCode: statusCode) else {
+            throw UnknownStatusCode()
+        }
+        return Workout(id: id, title: title, status: status, exerciseCount: exerciseCount)
+    }
+
+    private struct UnknownStatusCode: Error {}
+}
+
+private extension Workout.Status {
+    var storedCode: Int {
+        switch self {
         case .assigned: 0
         case .missed: 1
         case .completed: 2
         }
-        self.exerciseCount = workout.exerciseCount
     }
 
-    var local: Workout {
-        Workout(id: id, title: title, status: status == 0 ? .assigned : status == 1 ? .missed : .completed, exerciseCount: exerciseCount)
+    init?(storedCode: Int) {
+        switch storedCode {
+        case 0: self = .assigned
+        case 1: self = .missed
+        case 2: self = .completed
+        default: return nil
+        }
     }
 }
