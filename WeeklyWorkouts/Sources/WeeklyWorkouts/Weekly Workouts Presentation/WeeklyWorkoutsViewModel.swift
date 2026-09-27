@@ -69,7 +69,7 @@ public final class WeeklyWorkoutsViewModel {
 
     private func toggle(_ workoutID: String) async {
         guard let workout = workoutDays.lazy.flatMap(\.workouts).first(where: { $0.id == workoutID }) else { return }
-        let isCompleted = workout.status == .completed
+        let isCompleted = workout.isCompleted
         show(settingCompletion(!isCompleted, ofWorkout: workoutID, in: workoutDays))
         do {
             _ = try await toggler.toggle(workoutID: workoutID, isCompleted: isCompleted)

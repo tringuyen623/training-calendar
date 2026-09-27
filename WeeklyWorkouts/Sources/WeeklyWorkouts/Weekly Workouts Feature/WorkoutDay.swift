@@ -28,4 +28,8 @@ public struct Workout: Equatable, Sendable {
         self.status = status
         self.exerciseCount = exerciseCount
     }
+
+    var isCompleted: Bool {
+        status == .completed
+    }
 }
