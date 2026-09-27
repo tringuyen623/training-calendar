@@ -25,22 +25,21 @@ public final class LocalWorkoutsLoader: WorkoutsLoader {
         try await store.insert(days, timestamp: currentDate())
     }
 
+    private struct InvalidCache: Error {}
+
     public func validateCache() async throws {
-        let cache: CachedWorkouts?
         do {
-            cache = try await store.retrieve()
-        } catch let error as CancellationError {
-            throw error
+            if let cache = try await store.retrieve(), !isFromCurrentWeek(cache) {
+                throw InvalidCache()
+            }
+        } catch is InvalidCache {
+            try await marksStore.deleteAllMarks()
+            try await store.deleteCachedWorkouts()
+        } catch let cancellation as CancellationError {
+            throw cancellation
         } catch {
             try await store.deleteCachedWorkouts()
-            return
         }
-
-        guard let cache, !isFromCurrentWeek(cache) else {
-            return
-        }
-        try await marksStore.deleteAllMarks()
-        try await store.deleteCachedWorkouts()
     }
 
     private func isFromCurrentWeek(_ cache: CachedWorkouts) -> Bool {
