@@ -39,6 +39,10 @@ public final class WeeklyWorkoutsService {
         try await applyingMarks(to: local.load())
     }
 
+    public func validateCache() async throws {
+        try await local.validateCache()
+    }
+
     /// Loads the week from the API and replaces the cache with it, unmarked.
     private func refresh() async throws -> [WorkoutDay] {
         let (data, response) = try await fetch()

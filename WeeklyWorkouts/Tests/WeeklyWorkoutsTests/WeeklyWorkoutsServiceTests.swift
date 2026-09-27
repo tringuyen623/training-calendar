@@ -287,6 +287,17 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.writes.isEmpty)
     }
 
+    // MARK: - Cache validation
+
+    @Test func validateCache_deletesMarksThenCachedWorkoutsOnExpiredCache() async throws {
+        let (sut, _, store) = makeSUT()
+        store.stubRetrieval(with: CachedWorkouts(days: makeWeek([makeWorkout(status: .assigned)]), timestamp: date(2026, 9, 25, 18, 0)))
+
+        try await sut.validateCache()
+
+        #expect(store.receivedMessages == [.retrieve, .deleteAllMarks, .deleteCachedWorkouts])
+    }
+
     // MARK: - Helpers
 
     private func completePendingRefresh(of sut: WeeklyWorkoutsService, on client: HTTPClientSpy) async {
