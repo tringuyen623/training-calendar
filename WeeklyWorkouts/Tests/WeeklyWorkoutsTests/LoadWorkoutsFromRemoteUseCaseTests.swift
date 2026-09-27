@@ -167,10 +167,6 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         ["_id": id, "title": title, "status": status, "total_exercise": exerciseCount]
     }
 
-    private func anyNSError() -> NSError {
-        NSError(domain: "any error", code: 0)
-    }
-
     private final class HTTPClientSpy: HTTPClient {
         private(set) var requestedURLs: [URL] = []
         private var result: Result<(Data, HTTPURLResponse), Error> = .failure(NSError(domain: "not stubbed", code: 0))
