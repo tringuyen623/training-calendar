@@ -31,7 +31,7 @@ The feature logic has no UI dependency, so its tests run on macOS without a simu
 - `WeeklyWorkouts/` — Swift package: the `WeeklyWorkouts` target (models, API, cache, rules, ViewModel) and the `WeeklyWorkoutsUI` target (SwiftUI views).
 - `TrainingCalendar/` — the iOS app: composition root only.
 
-Inside the `WeeklyWorkouts` target, code is grouped by capability: `Weekly Workouts Feature`, `Weekly Workouts API`, `Weekly Workouts Cache` and `Weekly Workouts Presentation`. Each concrete adapter (the URLSession client, the SwiftData store) sits in an `Infrastructure` folder inside its capability.
+Inside the `WeeklyWorkouts` target, code is grouped by capability: `Weekly Workouts Feature` (the models and their rules), `Weekly Workouts Use Cases` (`WeeklyWorkoutsService`, one extension per use case), `Weekly Workouts API`, `Weekly Workouts Cache` and `Weekly Workouts Presentation`. Each concrete adapter (the URLSession client, the SwiftData store) sits in an `Infrastructure` folder inside its capability.
 
 ## Feature Specs
 
@@ -395,8 +395,11 @@ graph TD
             ViewModel["Weekly workouts ViewModel"]
             ViewData["View data"]
         end
-        subgraph Feature["Feature"]
+        subgraph UseCases["Use Cases"]
             Service["Weekly workouts service"]
+        end
+        subgraph Feature["Feature"]
+            Domain["Workout days and week rules"]
         end
         subgraph API["API"]
             Client["HTTP client<br/>protocol"]
@@ -417,6 +420,8 @@ graph TD
     Views --> ViewData
     ViewModel --> ViewData
     ViewModel --> Service
+    ViewModel --> Domain
+    Service --> Domain
     Service --> Client
     Service --> Store
     URLSession -. conforms to .-> Client
@@ -426,6 +431,7 @@ graph TD
     style UIModule fill:#EDE9FE,stroke:#7C3AED,color:#111827
     style Package fill:#FFFFFF,stroke:#374151,color:#111827
     style Presentation fill:#DBEAFE,stroke:#2563EB,color:#111827
+    style UseCases fill:#CCFBF1,stroke:#0D9488,color:#111827
     style Feature fill:#DCFCE7,stroke:#16A34A,color:#111827
     style API fill:#FFEDD5,stroke:#EA580C,color:#111827
     style Cache fill:#FEF9C3,stroke:#CA8A04,color:#111827
@@ -450,7 +456,7 @@ Solid arrows mean "depends on"; dotted arrows mean "conforms to". The whole app 
 - **One prompt per use case, one pull request per use case.** Each prompt names the use case, its key rules and its scope.
 - **Test list first, then TDD.** Claude built the tests one at a time: red, green, refactor. A test that passed on its first run was checked by breaking the code on purpose.
 - **Spikes before big decisions.** When a design was unclear, Claude built a throwaway spike so I could compare real code and tests before choosing. Examples: how the loading service depends on the store, and which thread SwiftData actually runs on.
-- **Generated logic is marked.** Non-trivial date and marks logic carries a `// Generated with Claude. Adjusted to handle …` comment: `MondayFirstWeek`, `WeekSchedule`, and the completion marks rule in `WeeklyWorkoutsService`.
+- **Generated logic is marked.** Non-trivial date and marks logic carries a `// Generated with Claude. Adjusted to handle …` comment: `MondayFirstWeek`, `WeekSchedule`, and the completion marks rule in `WorkoutDay` (`applying(_:)`).
 - **What AI sped up most:** writing all the code and tests, and the pixel measurements. Pull requests were merged only after my review and go-ahead.
 
 ### Prompts
