@@ -33,6 +33,15 @@ struct WeeklyWorkoutsServiceTests {
         }
     }
 
+    @Test func loadWeek_onEmptyCache_deliversCancellationErrorOnClientCancellation() async {
+        let (sut, client, _) = makeSUT()
+        client.stub(error: CancellationError())
+
+        await #expect(throws: CancellationError.self) {
+            try await sut.loadWeek()
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(

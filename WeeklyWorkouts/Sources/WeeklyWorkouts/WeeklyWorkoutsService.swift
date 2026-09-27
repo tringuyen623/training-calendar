@@ -28,6 +28,8 @@ public final class WeeklyWorkoutsService {
     private func fetch() async throws -> (Data, HTTPURLResponse) {
         do {
             return try await client.get(from: url)
+        } catch let cancellation as CancellationError {
+            throw cancellation
         } catch {
             throw Error.requestFailure
         }
