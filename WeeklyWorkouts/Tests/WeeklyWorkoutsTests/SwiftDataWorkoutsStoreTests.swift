@@ -78,6 +78,17 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(cache == CachedWorkouts(days: latestDays, timestamp: latestTimestamp))
     }
 
+    @Test func insert_doesNotDeleteOtherModelsInTheSameContainer() async throws {
+        let container = try makeContainer()
+        let sut = try makeSUT(container: container)
+        try await sut.insert(daysOutOfNaturalOrder(), timestamp: Date(timeIntervalSince1970: 1_000))
+        try insertOtherModel(into: container)
+
+        try await sut.insert(daysOutOfNaturalOrder(), timestamp: Date(timeIntervalSince1970: 2_000))
+
+        #expect(try otherModelsCount(in: container) == 1)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
@@ -87,10 +98,20 @@ struct SwiftDataWorkoutsStoreTests {
     private func makeContainer() throws -> ModelContainer {
         try containerCreationLock.withLock {
             try ModelContainer(
-                for: Schema(SwiftDataWorkoutsStore.models),
+                for: Schema(SwiftDataWorkoutsStore.models + [OtherModel.self]),
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true)
             )
         }
+    }
+
+    private func insertOtherModel(into container: ModelContainer) throws {
+        let context = ModelContext(container)
+        context.insert(OtherModel())
+        try context.save()
+    }
+
+    private func otherModelsCount(in container: ModelContainer) throws -> Int {
+        try ModelContext(container).fetchCount(FetchDescriptor<OtherModel>())
     }
 
     /// Saved order differs from both `day` order and ID order, so only a store keeping the saved order passes.
@@ -107,4 +128,12 @@ struct SwiftDataWorkoutsStoreTests {
             ]),
         ]
     }
+}
+
+/// Stands for any other model sharing the container, such as the completion marks.
+@Model
+private final class OtherModel {
+    var createdAt = Date(timeIntervalSince1970: 0)
+
+    init() {}
 }
