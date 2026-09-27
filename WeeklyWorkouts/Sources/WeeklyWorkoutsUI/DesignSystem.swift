@@ -43,9 +43,7 @@ enum Metrics {
     enum Row {
         /// 19pt of 375 (CSS: 5.07%).
         static let dateLeading: CGFloat = 19 / designWidth
-        /// 36pt of 375.
-        static let dateWidth: CGFloat = 36 / designWidth
-        /// 71pt of 375 (CSS: 18.93%).
+        /// 71pt of 375 (CSS: 18.93%): the 36pt date column, then 16pt before the card.
         static let cardLeading: CGFloat = 71 / designWidth
         /// 283pt of 375, leaving 21pt (5.6%) on the trailing side.
         static let cardWidth: CGFloat = 283 / designWidth
