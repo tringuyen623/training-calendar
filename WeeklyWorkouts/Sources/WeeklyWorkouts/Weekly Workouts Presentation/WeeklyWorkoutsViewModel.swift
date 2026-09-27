@@ -58,6 +58,16 @@ public final class WeeklyWorkoutsViewModel {
     }
 
     private func cardViewData(for workout: ScheduledWorkout) -> WorkoutCardViewData {
-        WorkoutCardViewData(id: workout.id, title: workout.title, statusText: nil, exerciseCount: "", status: .assigned)
+        WorkoutCardViewData(
+            id: workout.id,
+            title: workout.title,
+            statusText: nil,
+            exerciseCount: exerciseCountText(workout.exerciseCount),
+            status: .assigned
+        )
+    }
+
+    private func exerciseCountText(_ count: Int) -> String {
+        count == 1 ? "1 exercise" : "\(count) exercises"
     }
 }

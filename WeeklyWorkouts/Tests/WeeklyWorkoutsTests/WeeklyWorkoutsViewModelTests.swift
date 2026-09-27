@@ -60,6 +60,16 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(sut.days.flatMap(\.workouts).map(\.title) == [mondayWorkout.title, fridayWorkout.title])
     }
 
+    @Test(arguments: zip([1, 5], ["1 exercise", "5 exercises"]))
+    func loadWeek_formatsExerciseCount(count: Int, expectedText: String) async {
+        let (sut, loader, _) = makeSUT()
+        loader.stub(.success([WorkoutDay(id: UUID().uuidString, day: 0, workouts: [makeWorkout(exerciseCount: count)])]))
+
+        await sut.send(.loadWeek)
+
+        #expect(sut.days[0].workouts.map(\.exerciseCount) == [expectedText])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(
