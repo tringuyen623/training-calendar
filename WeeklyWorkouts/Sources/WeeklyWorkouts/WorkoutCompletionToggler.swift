@@ -6,7 +6,8 @@ public final class WorkoutCompletionToggler {
     }
 
     public func toggle(workoutID: String, isCompleted: Bool) async throws -> Bool {
-        try await marksStore.insertMark(!isCompleted, for: workoutID)
-        return isCompleted
+        let newCompletion = !isCompleted
+        try await marksStore.insertMark(newCompletion, for: workoutID)
+        return newCompletion
     }
 }

@@ -19,6 +19,15 @@ struct ToggleWorkoutCompletionUseCaseTests {
         #expect(marksStore.receivedMessages == [.insertMark(!isCompleted, workoutID)])
     }
 
+    @Test(arguments: [true, false])
+    func toggle_deliversNewCompletionOnSuccessfulInsertion(isCompleted: Bool) async throws {
+        let (sut, _) = makeSUT()
+
+        let newCompletion = try await sut.toggle(workoutID: UUID().uuidString, isCompleted: isCompleted)
+
+        #expect(newCompletion == !isCompleted)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> (sut: WorkoutCompletionToggler, marksStore: CompletionMarksStoreSpy) {
