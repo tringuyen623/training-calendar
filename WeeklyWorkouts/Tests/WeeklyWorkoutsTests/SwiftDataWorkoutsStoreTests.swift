@@ -26,6 +26,16 @@ struct SwiftDataWorkoutsStoreTests {
         #expect(cache == CachedWorkouts(days: days, timestamp: timestamp))
     }
 
+    @Test func retrieve_deliversCacheWithNoDaysOnCacheInsertedWithNoDays() async throws {
+        let sut = try makeSUT()
+        let timestamp = Date(timeIntervalSince1970: 1_000)
+
+        try await sut.insert([], timestamp: timestamp)
+        let cache = try await sut.retrieve()
+
+        #expect(cache == CachedWorkouts(days: [], timestamp: timestamp))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(container: ModelContainer? = nil) throws -> SwiftDataWorkoutsStore {
