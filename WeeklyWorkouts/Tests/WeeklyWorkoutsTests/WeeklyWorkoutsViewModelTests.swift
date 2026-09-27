@@ -90,6 +90,17 @@ struct WeeklyWorkoutsViewModelTests {
         #expect(card?.status == statusCase.expectedStatus)
     }
 
+    @Test func loadWeek_showsTheWeekOfTheCurrentDateWhenResultArrives() async {
+        var now = wednesdayNoon
+        let (sut, _, _) = makeSUT(now: { now })
+        now = date(2026, 10, 5, 9, 0)
+
+        await sut.send(.loadWeek)
+
+        #expect(sut.days.map(\.dayNumber) == ["5", "6", "7", "8", "9", "10", "11"])
+        #expect(sut.days.map(\.isToday) == [true, false, false, false, false, false, false])
+    }
+
     // MARK: - Helpers
 
     struct StatusCase: Sendable {
