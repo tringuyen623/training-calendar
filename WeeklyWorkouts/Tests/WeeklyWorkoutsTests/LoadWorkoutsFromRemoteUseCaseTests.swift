@@ -101,6 +101,15 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         }
     }
 
+    @Test func load_deliversNoDaysOn200HTTPResponseWithEmptyJSONList() async throws {
+        let (sut, client) = makeSUT()
+        client.result = .success((makeJSON(days: []), HTTPURLResponse(statusCode: 200)))
+
+        let days = try await sut.load()
+
+        #expect(days.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (sut: RemoteWorkoutsLoader, client: HTTPClientSpy) {
