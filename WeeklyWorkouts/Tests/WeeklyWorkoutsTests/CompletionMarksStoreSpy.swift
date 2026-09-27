@@ -4,6 +4,7 @@ import WeeklyWorkouts
 final class CompletionMarksStoreSpy: CompletionMarksStore {
     enum Message: Equatable {
         case deleteAllMarks
+        case insertMark(Bool, String)
     }
 
     private(set) var receivedMessages: [Message] = []
@@ -16,5 +17,9 @@ final class CompletionMarksStoreSpy: CompletionMarksStore {
     func deleteAllMarks() async throws {
         receivedMessages.append(.deleteAllMarks)
         try deletionResult.get()
+    }
+
+    func insertMark(_ isCompleted: Bool, for workoutID: String) async throws {
+        receivedMessages.append(.insertMark(isCompleted, workoutID))
     }
 }
