@@ -38,6 +38,15 @@ struct LoadWorkoutsFromCacheUseCaseTests {
         }
     }
 
+    @Test func load_deliversNoWorkoutsOnEmptyCache() async throws {
+        let (sut, store) = makeSUT()
+        store.stubEmptyCache()
+
+        let days = try await sut.load()
+
+        #expect(days.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> (sut: LocalWorkoutsLoader, store: WorkoutsStoreSpy) {
@@ -57,6 +66,10 @@ struct LoadWorkoutsFromCacheUseCaseTests {
 
         private(set) var receivedMessages: [Message] = []
         private var retrievalResult: Result<CachedWorkouts?, Error> = .success(nil)
+
+        func stubEmptyCache() {
+            retrievalResult = .success(nil)
+        }
 
         func stubRetrieval(with error: Error) {
             retrievalResult = .failure(error)
