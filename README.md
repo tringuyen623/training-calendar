@@ -212,14 +212,17 @@ Given a workout that is completed
 
 #### Data:
 - Weekly workouts
-- Completion marks (by workout ID)
 
 #### Primary course:
 1. Execute "Apply Completion Marks" command with above data.
-2. For each workout with a mark, System sets whether it's completed as the mark says, whatever the server status.
-3. Workouts without a mark keep the server's completion.
-4. System ignores marks for workouts that aren't in the week.
-5. System delivers the weekly workouts.
+2. System retrieves the completion marks.
+3. For each workout with a mark, System sets whether it's completed as the mark says, whatever the server status.
+4. Workouts without a mark keep the server's completion.
+5. System ignores marks for workouts that aren't in the week.
+6. System delivers the weekly workouts.
+
+#### Retrieval error course (sad path):
+1. System delivers error.
 
 ## Flowchart
 
@@ -329,6 +332,7 @@ graph TD
         Local --> Store["Workouts store<br/>protocol, notifies changes"]
         Local --> Marks["Completion marks store<br/>protocol"]
         Toggler["Workout completion toggler"] --> Marks
+        Applier["Completion marks applier"] --> Marks
         Loader --> Models["Weekly workouts<br/>models"]
     end
 ```
