@@ -49,6 +49,11 @@ struct WeekScheduleTests {
         #expect(status(of: makeWorkout(status: .missed), on: thursday) == .upcoming)
     }
 
+    @Test(arguments: [1, 2, 3])
+    func days_showsCompletedForCompletedWorkoutWhateverItsDay(day: Int) {
+        #expect(status(of: makeWorkout(status: .completed), on: day) == .completed)
+    }
+
     // MARK: - Helpers
 
     private let wednesdayNoon = date(2026, 9, 30, 12, 0)

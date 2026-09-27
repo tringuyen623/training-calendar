@@ -30,12 +30,13 @@ public enum WeekSchedule {
             return ScheduledDay(
                 date: date,
                 isToday: calendar.isDate(date, inSameDayAs: now),
-                workouts: workouts.map { ScheduledWorkout(id: $0.id, title: $0.title, exerciseCount: $0.exerciseCount, status: status(on: date, today: today)) }
+                workouts: workouts.map { ScheduledWorkout(id: $0.id, title: $0.title, exerciseCount: $0.exerciseCount, status: status(of: $0, on: date, today: today)) }
             )
         }
     }
 
-    private static func status(on date: Date, today: Date) -> ScheduledWorkout.Status {
+    private static func status(of workout: Workout, on date: Date, today: Date) -> ScheduledWorkout.Status {
+        if workout.status == .completed { return .completed }
         if date < today { return .missed }
         if date > today { return .upcoming }
         return .assigned
