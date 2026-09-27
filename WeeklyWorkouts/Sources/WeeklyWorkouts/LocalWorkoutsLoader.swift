@@ -14,8 +14,7 @@ public final class LocalWorkoutsLoader: WorkoutsLoader {
     }
 
     public func load() async throws -> [WorkoutDay] {
-        guard let cache = try await store.retrieve(),
-              WorkoutsCachePolicy.validate(cache.timestamp, against: currentDate(), in: calendar) else {
+        guard let cache = try await store.retrieve(), isFromCurrentWeek(cache) else {
             return []
         }
         return cache.days
@@ -35,10 +34,14 @@ public final class LocalWorkoutsLoader: WorkoutsLoader {
             return
         }
 
-        guard let cache, !WorkoutsCachePolicy.validate(cache.timestamp, against: currentDate(), in: calendar) else {
+        guard let cache, !isFromCurrentWeek(cache) else {
             return
         }
         try await marksStore.deleteAllMarks()
         try await store.deleteCachedWorkouts()
+    }
+
+    private func isFromCurrentWeek(_ cache: CachedWorkouts) -> Bool {
+        WorkoutsCachePolicy.validate(cache.timestamp, against: currentDate(), in: calendar)
     }
 }
