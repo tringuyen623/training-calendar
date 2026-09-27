@@ -31,6 +31,12 @@ struct WeekScheduleTests {
         #expect(days.flatMap(\.workouts).map(\.exerciseCount) == (mondayWorkouts + fridayWorkouts).map(\.exerciseCount))
     }
 
+    @Test func days_marksOnlyTheDayOfNowAsToday() {
+        let days = WeekSchedule.days(for: [], now: date(2026, 9, 30, 12, 0), calendar: makeCalendar())
+
+        #expect(days.map(\.isToday) == [false, false, true, false, false, false, false])
+    }
+
     // MARK: - Helpers
 
     private func makeWorkout(status: Workout.Status = .assigned) -> Workout {
