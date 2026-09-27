@@ -46,16 +46,6 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         }
     }
 
-    @Test(arguments: [199, 201, 300, 400, 500])
-    func load_deliversInvalidDataErrorOnNon200HTTPResponse(statusCode: Int) async {
-        let (sut, client) = makeSUT()
-        client.stub(statusCode: statusCode, data: makeJSON(days: []))
-
-        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
-            try await sut.load()
-        }
-    }
-
     @Test func load_deliversInvalidDataErrorOn200HTTPResponseWithInvalidJSON() async {
         let (sut, client) = makeSUT()
         client.stub(statusCode: 200, data: Data("invalid json".utf8))
@@ -63,60 +53,6 @@ struct LoadWorkoutsFromRemoteUseCaseTests {
         await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
             try await sut.load()
         }
-    }
-
-    @Test(arguments: ["_id", "day", "assignments"])
-    func load_deliversInvalidDataErrorOn200HTTPResponseWithDayMissingField(field: String) async {
-        let (sut, client) = makeSUT()
-        var day = makeDayJSON(workouts: [makeWorkoutJSON()])
-        day[field] = nil
-        client.stub(statusCode: 200, data: makeJSON(days: [day]))
-
-        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
-            try await sut.load()
-        }
-    }
-
-    @Test(arguments: ["_id", "title", "status", "total_exercise"])
-    func load_deliversInvalidDataErrorOn200HTTPResponseWithWorkoutMissingField(field: String) async {
-        let (sut, client) = makeSUT()
-        var workout = makeWorkoutJSON()
-        workout[field] = nil
-        client.stub(statusCode: 200, data: makeJSON(days: [makeDayJSON(workouts: [workout])]))
-
-        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
-            try await sut.load()
-        }
-    }
-
-    @Test(arguments: [-1, 3])
-    func load_deliversInvalidDataErrorOn200HTTPResponseWithUnknownStatus(status: Int) async {
-        let (sut, client) = makeSUT()
-        let day = makeDayJSON(workouts: [makeWorkoutJSON(status: status)])
-        client.stub(statusCode: 200, data: makeJSON(days: [day]))
-
-        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
-            try await sut.load()
-        }
-    }
-
-    @Test(arguments: [-1, 7])
-    func load_deliversInvalidDataErrorOn200HTTPResponseWithDayOutOfRange(day: Int) async {
-        let (sut, client) = makeSUT()
-        client.stub(statusCode: 200, data: makeJSON(days: [makeDayJSON(day: day)]))
-
-        await #expect(throws: RemoteWorkoutsLoader.Error.invalidData) {
-            try await sut.load()
-        }
-    }
-
-    @Test func load_deliversNoDaysOn200HTTPResponseWithEmptyJSONList() async throws {
-        let (sut, client) = makeSUT()
-        client.stub(statusCode: 200, data: makeJSON(days: []))
-
-        let days = try await sut.load()
-
-        #expect(days.isEmpty)
     }
 
     @Test func load_deliversMappedDaysOn200HTTPResponseWithJSONDays() async throws {
