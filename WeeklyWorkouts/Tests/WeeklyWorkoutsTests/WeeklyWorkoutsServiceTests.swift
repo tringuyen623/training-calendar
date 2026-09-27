@@ -13,6 +13,17 @@ struct WeeklyWorkoutsServiceTests {
         #expect(store.receivedMessages.isEmpty)
     }
 
+    // MARK: - No cached week
+
+    @Test func loadWeek_onEmptyCache_requestsDataFromURLOnce() async {
+        let url = URL(string: "https://a-given-url.com")!
+        let (sut, client, _) = makeSUT(url: url)
+
+        _ = try? await sut.loadWeek()
+
+        #expect(client.requestedURLs == [url])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(

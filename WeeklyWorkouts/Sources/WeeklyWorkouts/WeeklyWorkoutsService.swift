@@ -15,4 +15,9 @@ public final class WeeklyWorkoutsService {
         self.store = store
         self.local = LocalWorkoutsLoader(store: store, marksStore: store, calendar: calendar, currentDate: currentDate)
     }
+
+    public func loadWeek() async throws -> [WorkoutDay] {
+        _ = try await client.get(from: url)
+        return []
+    }
 }
