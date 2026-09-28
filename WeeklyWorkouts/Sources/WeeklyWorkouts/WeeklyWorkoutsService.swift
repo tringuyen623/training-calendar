@@ -29,7 +29,7 @@ public final class WeeklyWorkoutsService {
 
 // MARK: - Load Weekly Workouts Use Case
 
-extension WeeklyWorkoutsService {
+extension WeeklyWorkoutsService: WeekLoader {
     public func loadWeek() async throws -> [WorkoutDay] {
         let cached = await cachedWeek()
         guard cached.isEmpty else {
@@ -105,7 +105,7 @@ extension WeeklyWorkoutsService {
 
 // MARK: - Toggle Workout Completion Use Case
 
-extension WeeklyWorkoutsService {
+extension WeeklyWorkoutsService: CompletionToggler {
     /// Saves the inverted completion as the workout's mark and delivers it.
     public func toggle(workoutID: String, isCompleted: Bool) async throws -> Bool {
         let newCompletion = !isCompleted
