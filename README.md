@@ -4,7 +4,7 @@ A weekly training calendar for iOS: it shows the current week's workouts (Monday
 
 ## Video Walkthrough
 
-Coming soon: the link will be added here.
+https://www.loom.com/share/ffc9944491234a4ca2795bf7f8f2f856
 
 ## Build & Run
 
