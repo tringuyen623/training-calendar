@@ -410,9 +410,7 @@ graph TD
                 SwiftData["SwiftData store"]
             end
         end
-        subgraph Feature["Feature"]
-            Domain["Workout days and week rules"]
-        end
+        Domain["Feature<br/>workout days and week rules"]
     end
 
     App --> UIModule
@@ -436,7 +434,7 @@ graph TD
     style Package fill:#FFFFFF,stroke:#374151,color:#111827
     style Presentation fill:#DBEAFE,stroke:#2563EB,color:#111827
     style Service fill:#CCFBF1,stroke:#0D9488,color:#111827
-    style Feature fill:#DCFCE7,stroke:#16A34A,color:#111827
+    style Domain fill:#DCFCE7,stroke:#16A34A,color:#111827
     style API fill:#FFEDD5,stroke:#EA580C,color:#111827
     style Cache fill:#FEF9C3,stroke:#CA8A04,color:#111827
     style APIInfra fill:#F3F4F6,stroke:#9CA3AF,stroke-dasharray:4 3,color:#111827
