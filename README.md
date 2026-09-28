@@ -382,66 +382,13 @@ The brief and the mock API leave a few points open. These are the decisions take
 
 ## Architecture
 
-```mermaid
-graph TD
-    App["TrainingCalendar app<br/>composition root"]
+![Architecture: every module depends toward the Feature module](docs/architecture.svg)
 
-    subgraph UIModule["WeeklyWorkoutsUI"]
-        Views["Week views"]
-    end
-
-    subgraph Package["WeeklyWorkouts"]
-        subgraph Presentation["Presentation"]
-            ViewModel["Weekly workouts ViewModel"]
-            ViewData["View data"]
-        end
-        Service["Weekly workouts<br/>application service"]
-        subgraph API["API"]
-            Client["HTTP client<br/>protocol"]
-            Mapper["Workout days mapper"]
-            subgraph APIInfra["Infrastructure"]
-                URLSession["URLSession HTTP client"]
-            end
-        end
-        subgraph Cache["Cache"]
-            Store["Workouts store<br/>protocol"]
-            Local["Local workouts loader"]
-            subgraph CacheInfra["Infrastructure"]
-                SwiftData["SwiftData store"]
-            end
-        end
-        Domain["Feature<br/>workout days and week rules"]
-    end
-
-    App --> UIModule
-    App --> Package
-    Views --> ViewData
-    ViewModel --> ViewData
-    ViewModel -- "WeekLoader ·<br/>CompletionToggler" --> Service
-    ViewModel --> Domain
-    Service --> Client
-    Service --> Mapper
-    Service --> Local
-    Service --> Domain
-    Mapper --> Domain
-    Local --> Store
-    Local --> Domain
-    URLSession -. conforms to .-> Client
-    SwiftData -. conforms to .-> Store
-
-    style App fill:#E5E7EB,stroke:#6B7280,color:#111827
-    style UIModule fill:#EDE9FE,stroke:#7C3AED,color:#111827
-    style Package fill:#FFFFFF,stroke:#374151,color:#111827
-    style Presentation fill:#DBEAFE,stroke:#2563EB,color:#111827
-    style Service fill:#CCFBF1,stroke:#0D9488,color:#111827
-    style Domain fill:#DCFCE7,stroke:#16A34A,color:#111827
-    style API fill:#FFEDD5,stroke:#EA580C,color:#111827
-    style Cache fill:#FEF9C3,stroke:#CA8A04,color:#111827
-    style APIInfra fill:#F3F4F6,stroke:#9CA3AF,stroke-dasharray:4 3,color:#111827
-    style CacheInfra fill:#F3F4F6,stroke:#9CA3AF,stroke-dasharray:4 3,color:#111827
-```
-
-Solid arrows mean "depends on"; dotted arrows mean "conforms to". The whole app target is the composition root: it depends on both modules, creates the concrete types and wires them together. Inside the `WeeklyWorkouts` package, the service only knows the protocols of the API and the cache; each concrete adapter lives in its capability's `Infrastructure` folder. The ViewModel only knows the two use cases it runs, through the `WeekLoader` and `CompletionToggler` protocols. They are the service's own boundaries, declared in its file next to the use cases that conform to them, so the service never depends on the presentation. The views only read display data.
+Arrows mean "depends on", and they all point toward **Feature**, the workout models and their rules:
+- **API** and **Cache** define the protocols they need (the HTTP client, the stores) and map to and from the Feature models. Their **Infrastructure** modules implement those protocols with URLSession and SwiftData, so the frameworks stay at the edges.
+- The **application service** (`WeeklyWorkoutsService`) runs the use cases: it depends on Feature and on the API and Cache protocols, never on URLSession or SwiftData.
+- **Presentation** (the ViewModel) only knows the two use cases it runs, through the `WeekLoader` and `CompletionToggler` protocols. **WeeklyWorkoutsUI** only reads its display data.
+- The **TrainingCalendar app** is the composition root: it creates the concrete types and wires them together.
 
 ## AI Collaboration
 
