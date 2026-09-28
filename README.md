@@ -382,13 +382,24 @@ The brief and the mock API leave a few points open. These are the decisions take
 
 ## Architecture
 
-![Architecture: every module depends toward the Feature module](docs/architecture.svg)
+### App architecture
 
-Arrows mean "depends on", and they all point toward **Feature**, the workout models and their rules:
-- **API** and **Cache** define the protocols they need (the HTTP client, the stores) and map to and from the Feature models. Their **Infrastructure** modules implement those protocols with URLSession and SwiftData, so the frameworks stay at the edges.
-- The **application service** (`WeeklyWorkoutsService`) runs the use cases: it depends on Feature and on the API and Cache protocols, never on URLSession or SwiftData.
-- **Presentation** (the ViewModel) only knows the two use cases it runs, through the `WeekLoader` and `CompletionToggler` protocols. **WeeklyWorkoutsUI** only reads its display data.
-- The **TrainingCalendar app** is the composition root: it creates the concrete types and wires them together.
+![App architecture: the TrainingCalendar app composes the WeeklyWorkouts package](docs/app-architecture.svg)
+
+The app is built from one feature package. Arrows mean "depends on":
+- **WeeklyWorkouts package** holds the whole feature: API and Cache with their Infrastructure adapters, the Feature models and rules, the **application service** (`WeeklyWorkoutsService`, one extension per use case), Presentation and the SwiftUI views.
+- **TrainingCalendar app** is the composition root: the only place that creates the concrete types and wires them together.
+- Frameworks (URLSession, SwiftData, SwiftUI) sit outside, used only by the Infrastructure adapters and the views.
+- The ViewModel only knows the two use cases it runs, through the `WeekLoader` and `CompletionToggler` protocols.
+
+### Dependency rule
+
+![Dependency rule: every dependency points inward, toward the Feature](docs/dependency-rule.svg)
+
+Inside the package, every dependency points inward, toward the Feature's models and rules:
+- **Feature** (the core): the workout models and the business rules: the current week, a workout's status, local marks winning over the server.
+- **API, Cache, the application service and Presentation** hold the logic around them, with no framework types.
+- **Infrastructure adapters and the UI** are the only framework-specific code. The API and Cache define the protocols they need, and URLSession and SwiftData conform to them, so they can be replaced.
 
 ## AI Collaboration
 
