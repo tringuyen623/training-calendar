@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// The week screen's state: always the seven days of the current week, with the delivered workouts placed into them.
-/// It only formats what `WeekSchedule` derives; it loads and saves completions through the injected service.
+/// It only formats what `WeekSchedule` derives; it loads the week and toggles completions through the injected roles.
 @MainActor
 @Observable
 public final class WeeklyWorkoutsViewModel {
@@ -19,16 +19,19 @@ public final class WeeklyWorkoutsViewModel {
     /// The week behind `days`, kept to toggle a workout from its current completion.
     @ObservationIgnored private var workoutDays: [WorkoutDay] = []
 
-    private let service: WeeklyWorkoutsService
+    private let weekLoader: WeekLoader
+    private let completionToggler: CompletionToggler
     private let calendar: Calendar
     private let now: () -> Date
 
     public init(
-        service: WeeklyWorkoutsService,
+        weekLoader: WeekLoader,
+        completionToggler: CompletionToggler,
         calendar: Calendar,
         now: @escaping () -> Date
     ) {
-        self.service = service
+        self.weekLoader = weekLoader
+        self.completionToggler = completionToggler
         self.calendar = calendar
         self.now = now
         show([])
@@ -55,7 +58,7 @@ public final class WeeklyWorkoutsViewModel {
         isLoading = true
         defer { isLoading = false }
         do {
-            show(try await service.loadWeek())
+            show(try await weekLoader.loadWeek())
         } catch is CancellationError {
             return
         } catch {
@@ -70,7 +73,7 @@ public final class WeeklyWorkoutsViewModel {
         let newCompletion = !isCompleted
         show(workoutDays.applying([workoutID: newCompletion]))
         do {
-            _ = try await service.toggle(workoutID: workoutID, isCompleted: isCompleted)
+            _ = try await completionToggler.toggle(workoutID: workoutID, isCompleted: isCompleted)
         } catch {
             show(workoutDays.applying([workoutID: isCompleted]))
             errorMessage = "Couldn't save your change"

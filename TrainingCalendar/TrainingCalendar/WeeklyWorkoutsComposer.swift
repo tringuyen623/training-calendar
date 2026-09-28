@@ -20,7 +20,8 @@ final class WeeklyWorkoutsComposer {
 
         self.service = service
         self.viewModel = WeeklyWorkoutsViewModel(
-            service: service,
+            weekLoader: service,
+            completionToggler: service,
             calendar: calendar,
             now: Date.init
         )

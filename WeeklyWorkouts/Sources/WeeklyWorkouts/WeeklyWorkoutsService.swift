@@ -29,7 +29,13 @@ public final class WeeklyWorkoutsService {
 
 // MARK: - Load Weekly Workouts Use Case
 
-extension WeeklyWorkoutsService {
+/// Loads the week to show: the workout days with the local completion marks applied.
+@MainActor
+public protocol WeekLoader {
+    func loadWeek() async throws -> [WorkoutDay]
+}
+
+extension WeeklyWorkoutsService: WeekLoader {
     public func loadWeek() async throws -> [WorkoutDay] {
         let cached = await cachedWeek()
         guard cached.isEmpty else {
@@ -105,8 +111,13 @@ extension WeeklyWorkoutsService {
 
 // MARK: - Toggle Workout Completion Use Case
 
-extension WeeklyWorkoutsService {
-    /// Saves the inverted completion as the workout's mark and delivers it.
+/// Saves the inverted completion as the workout's mark and delivers it.
+@MainActor
+public protocol CompletionToggler {
+    func toggle(workoutID: String, isCompleted: Bool) async throws -> Bool
+}
+
+extension WeeklyWorkoutsService: CompletionToggler {
     public func toggle(workoutID: String, isCompleted: Bool) async throws -> Bool {
         let newCompletion = !isCompleted
         try await store.insertMark(newCompletion, for: workoutID)
