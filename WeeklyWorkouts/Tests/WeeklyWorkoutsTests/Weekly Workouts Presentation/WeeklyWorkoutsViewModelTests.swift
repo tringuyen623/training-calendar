@@ -231,7 +231,8 @@ struct WeeklyWorkoutsViewModelTests {
         calendar.locale = Locale(identifier: "en_US_POSIX")
         let service = WeeklyWorkoutsService(url: URL(string: "https://a-url.com")!, client: client, store: store, calendar: calendar, currentDate: now)
         let sut = WeeklyWorkoutsViewModel(
-            service: service,
+            weekLoader: service,
+            completionToggler: service,
             calendar: calendar,
             now: now
         )
