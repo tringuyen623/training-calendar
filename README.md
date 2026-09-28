@@ -382,49 +382,24 @@ The brief and the mock API leave a few points open. These are the decisions take
 
 ## Architecture
 
-```mermaid
-graph TD
-    App["TrainingCalendar app<br/>composition root"]
+### App architecture
 
-    subgraph UIModule["WeeklyWorkoutsUI"]
-        Views["SwiftUI views"]
-    end
+![App architecture: the TrainingCalendar app composes the WeeklyWorkouts package](docs/app-architecture.svg)
 
-    subgraph Package["WeeklyWorkouts"]
-        Presentation["Presentation<br/>ViewModel · view data"]
-        Service["Application service<br/>WeeklyWorkoutsService"]
-        Feature["Feature<br/>workout days · week rules"]
-        API["API<br/>HTTP client protocol · mapper"]
-        Cache["Cache<br/>store protocol · local loader"]
-        URLSession["URLSession client<br/>Infrastructure"]
-        SwiftData["SwiftData store<br/>Infrastructure"]
-    end
+The app is built from one feature package. Arrows mean "depends on":
+- **WeeklyWorkouts package** holds the whole feature: API and Cache with their Infrastructure adapters, the Feature models and rules, the **application service** (`WeeklyWorkoutsService`, one extension per use case), Presentation and the SwiftUI views.
+- **TrainingCalendar app** is the composition root: the only place that creates the concrete types and wires them together.
+- Frameworks (URLSession, SwiftData, SwiftUI) sit outside, used only by the Infrastructure adapters and the views.
+- The ViewModel only knows the two use cases it runs, through the `WeekLoader` and `CompletionToggler` protocols.
 
-    App --> Views
-    App --> Presentation
-    Views --> Presentation
-    Presentation -- "WeekLoader ·<br/>CompletionToggler" --> Service
-    Presentation --> Feature
-    Service --> Feature
-    Service --> API
-    Service --> Cache
-    URLSession -. conforms to .-> API
-    SwiftData -. conforms to .-> Cache
+### Dependency rule
 
-    style App fill:#E5E7EB,stroke:#6B7280,color:#111827
-    style UIModule fill:#EDE9FE,stroke:#7C3AED,color:#111827
-    style Views fill:#EDE9FE,stroke:#7C3AED,color:#111827
-    style Package fill:#FFFFFF,stroke:#374151,color:#111827
-    style Presentation fill:#DBEAFE,stroke:#2563EB,color:#111827
-    style Service fill:#CCFBF1,stroke:#0D9488,color:#111827
-    style Feature fill:#DCFCE7,stroke:#16A34A,color:#111827
-    style API fill:#FFEDD5,stroke:#EA580C,color:#111827
-    style Cache fill:#FEF9C3,stroke:#CA8A04,color:#111827
-    style URLSession fill:#F3F4F6,stroke:#9CA3AF,stroke-dasharray:4 3,color:#111827
-    style SwiftData fill:#F3F4F6,stroke:#9CA3AF,stroke-dasharray:4 3,color:#111827
-```
+![Dependency rule: every dependency points inward, toward the Feature](docs/dependency-rule.svg)
 
-Solid arrows mean "depends on"; dotted arrows mean "conforms to". The whole app target is the composition root: it depends on both modules, creates the concrete types and wires them together. Inside the `WeeklyWorkouts` package, the service only knows the protocols of the API and the cache; each concrete adapter lives in its capability's `Infrastructure` folder. The ViewModel only knows the two use cases it runs, through the `WeekLoader` and `CompletionToggler` protocols. They are the service's own boundaries, declared in its file next to the use cases that conform to them, so the service never depends on the presentation. The views only read display data.
+Inside the package, every dependency points inward, toward the Feature's models and rules:
+- **Feature** (the core): the workout models and the business rules: the current week, a workout's status, local marks winning over the server.
+- **API, Cache, the application service and Presentation** hold the logic around them, with no framework types.
+- **Infrastructure adapters and the UI** are the only framework-specific code. The API and Cache define the protocols they need, and URLSession and SwiftData conform to them, so they can be replaced.
 
 ## AI Collaboration
 
