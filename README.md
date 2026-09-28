@@ -408,6 +408,8 @@ graph TD
     Service --> Feature
     Service --> API
     Service --> Cache
+    API -- mapper --> Feature
+    Cache -- local loader --> Feature
     URLSession -. conforms to .-> API
     SwiftData -. conforms to .-> Cache
 
