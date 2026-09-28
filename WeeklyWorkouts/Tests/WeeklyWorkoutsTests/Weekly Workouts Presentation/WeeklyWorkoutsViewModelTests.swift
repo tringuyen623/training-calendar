@@ -10,10 +10,10 @@ private let thursday = 3
 @MainActor
 struct WeeklyWorkoutsViewModelTests {
     @Test func init_doesNotRequestLoadOrToggle() {
-        let (_, loader, store) = makeSUT()
+        let (_, loader, toggler) = makeSUT()
 
         #expect(loader.loadCallCount == 0)
-        #expect(store.receivedMessages.isEmpty)
+        #expect(toggler.receivedToggles.isEmpty)
     }
 
     @Test func init_showsTheSevenFormattedDaysOfTheCurrentWeekWithNoWorkouts() {
@@ -149,7 +149,7 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func display_placesDeliveredWorkoutsIntoTheDaysWithoutRequestingLoadOrToggle() {
-        let (sut, loader, store) = makeSUT()
+        let (sut, loader, toggler) = makeSUT()
         let workout = makeWorkout(status: .completed)
 
         sut.display([makeDay(tuesday, with: workout)])
@@ -158,33 +158,33 @@ struct WeeklyWorkoutsViewModelTests {
             WorkoutCardViewData(id: workout.id, title: workout.title, statusText: "Completed", exerciseCount: "5 exercises", status: .completed),
         ])
         #expect(loader.loadCallCount == 0)
-        #expect(store.receivedMessages.isEmpty)
+        #expect(toggler.receivedToggles.isEmpty)
     }
 
     @Test(arguments: [true, false])
     func toggle_requestsToggleWithWorkoutsCurrentCompletion(isCompleted: Bool) async {
-        let (sut, _, store) = makeSUT()
+        let (sut, _, toggler) = makeSUT()
         let workout = makeWorkout(status: isCompleted ? .completed : .assigned)
         sut.display([makeDay(tuesday, with: workout)])
 
         await sut.send(.toggle(workoutID: workout.id))
 
-        #expect(store.receivedMessages == [.insertMark(!isCompleted, workout.id)])
+        #expect(toggler.receivedToggles == [.init(workoutID: workout.id, isCompleted: isCompleted)])
     }
 
     @Test(arguments: zip([Workout.Status.assigned, .completed], [WorkoutCardViewData.Status.completed, .missed]))
     func toggle_showsNewCompletionWhileSaving(status: Workout.Status, expectedStatus: WorkoutCardViewData.Status) async {
-        let (sut, _, store) = makeSUT()
+        let (sut, _, toggler) = makeSUT()
         let workout = makeWorkout(status: status)
         sut.display([makeDay(tuesday, with: workout)])
-        store.stubPendingMarkInsertion()
+        toggler.stubPendingToggle()
 
         let toggling = Task { await sut.send(.toggle(workoutID: workout.id)) }
-        await store.waitForPendingMarkInsertion()
+        await toggler.waitForPendingToggle()
 
         #expect(sut.days[tuesday].workouts.map(\.status) == [expectedStatus])
 
-        store.completePendingMarkInsertion(with: .success(()))
+        toggler.completePendingToggle(with: .success(status != .completed))
         await toggling.value
     }
 
@@ -200,10 +200,10 @@ struct WeeklyWorkoutsViewModelTests {
     }
 
     @Test func toggle_onFailure_revertsToPreviousCompletionAndShowsError() async {
-        let (sut, _, store) = makeSUT()
+        let (sut, _, toggler) = makeSUT()
         let workout = makeWorkout(status: .completed)
         sut.display([makeDay(tuesday, with: workout)])
-        store.stubMarkInsertion(with: anyNSError())
+        toggler.stub(error: anyNSError())
 
         await sut.send(.toggle(workoutID: workout.id))
 
@@ -220,22 +220,21 @@ struct WeeklyWorkoutsViewModelTests {
         let expectedStatus: WorkoutCardViewData.Status
     }
 
-    /// Loads through a spy delivering an empty week by default; toggles through a real service.
+    /// By default the loader delivers an empty week and the toggler saves successfully.
     private func makeSUT(
         now: @escaping () -> Date = { wednesdayNoon }
-    ) -> (sut: WeeklyWorkoutsViewModel, loader: WeekLoaderSpy, store: WeeklyWorkoutsStoreSpy) {
+    ) -> (sut: WeeklyWorkoutsViewModel, loader: WeekLoaderSpy, toggler: CompletionTogglerSpy) {
         let loader = WeekLoaderSpy()
-        let store = WeeklyWorkoutsStoreSpy()
+        let toggler = CompletionTogglerSpy()
         var calendar = makeCalendar()
         calendar.locale = Locale(identifier: "en_US_POSIX")
-        let service = WeeklyWorkoutsService(url: URL(string: "https://a-url.com")!, client: HTTPClientSpy(), store: store, calendar: calendar, currentDate: now)
         let sut = WeeklyWorkoutsViewModel(
             weekLoader: loader,
-            completionToggler: service,
+            completionToggler: toggler,
             calendar: calendar,
             now: now
         )
-        return (sut, loader, store)
+        return (sut, loader, toggler)
     }
 
     private func makeDay(_ day: Int, with workout: Workout) -> WorkoutDay {
